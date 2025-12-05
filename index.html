@@ -90,86 +90,165 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const productInput = document.getElementById('product-input');
-    const resultsEl = document.getElementById('results');
-    const productTitleEl = document.getElementById('product-title');
-    const valueRangeEl = document.getElementById('value-range');
-    const demandScoreEl = document.getElementById('demand-score');
-    const confidenceScoreEl = document.getElementById('confidence-score');
-    const resaleWindowEl = document.getElementById('resale-window');
-    const conditionPillsEl = document.getElementById('condition-pills');
-    const summaryEl = document.getElementById('summary');
-    const toast = document.getElementById('toast');
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const productInput = document.getElementById('product-input');
+  const resultsEl = document.getElementById('results');
+  const productTitleEl = document.getElementById('product-title');
+  const valueRangeEl = document.getElementById('value-range');
+  const demandScoreEl = document.getElementById('demand-score');
+  const confidenceScoreEl = document.getElementById('confidence-score');
+  const resaleWindowEl = document.getElementById('resale-window');
+  const conditionPillsEl = document.getElementById('condition-pills');
+  const summaryEl = document.getElementById('summary');
+  const recentListEl = document.getElementById('recent-list');
 
-    function showToast(message) {
-      toast.textContent = message;
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+  const alertBtn = document.getElementById('alert-btn');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalClose = document.getElementById('modal-close');
+  const alertForm = document.getElementById('alert-form');
+  const toast = document.getElementById('toast');
+
+  const previewProduct = document.getElementById('preview-product');
+  const previewValue = document.getElementById('preview-value');
+  const previewDemand = document.getElementById('preview-demand');
+
+  let currentPrediction = null;
+
+  function showToast(message) {
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2500);
+  }
+
+  function loadRecent() {
+    const stored = localStorage.getItem('bb_recent_products');
+    if (!stored) {
+      recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+      return;
     }
-
-    function renderPrediction(prediction) {
-      productTitleEl.textContent = prediction.productTitle || '';
-      valueRangeEl.textContent = prediction.valueRange || '—';
-      demandScoreEl.textContent = (prediction.demandScore ?? '—') + (prediction.demandScore != null ? '/100' : '');
-      confidenceScoreEl.textContent = (prediction.confidenceScore ?? '—') + (prediction.confidenceScore != null ? '/100' : '');
-      resaleWindowEl.textContent = prediction.resaleWindow || '—';
-      summaryEl.textContent = prediction.summary || '';
-
-      conditionPillsEl.innerHTML = '';
-      if (Array.isArray(prediction.conditionPricing)) {
-        prediction.conditionPricing.forEach(cond => {
-          const pill = document.createElement('span');
-          pill.className = 'pill';
-          pill.textContent = cond.tier + ': ' + cond.range;
-          conditionPillsEl.appendChild(pill);
-        });
-      }
-
-      resultsEl.style.display = 'block';
+    const recent = JSON.parse(stored);
+    if (!recent.length) {
+      recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+      return;
     }
+    recentListEl.innerHTML = '';
+    recent.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = item.title + ' – predicted used: ' + item.valueRange;
+      recentListEl.appendChild(li);
+    });
+  }
 
-    async function callPredict(productText) {
-      const res = await fetch('/.netlify/functions/predict', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product: productText })
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Predict error:', text);
-        throw new Error('Prediction request failed');
-      }
-      return await res.json();
-    }
+  function saveRecent(prediction) {
+    const stored = localStorage.getItem('bb_recent_products');
+    let recent = stored ? JSON.parse(stored) : [];
+    recent.unshift({
+      title: prediction.productTitle,
+      valueRange: prediction.valueRange
+    });
+    recent = recent.slice(0, 5);
+    localStorage.setItem('bb_recent_products', JSON.stringify(recent));
+    loadRecent();
+  }
 
-    analyzeBtn.addEventListener('click', async () => {
-      const value = productInput.value.trim();
-      if (!value) {
-        showToast('Please paste a link or product name first.');
-        return;
-      }
-      analyzeBtn.disabled = true;
-      analyzeBtn.textContent = 'Analyzing...';
-      resultsEl.style.display = 'none';
-      try {
-        const prediction = await callPredict(value);
-        renderPrediction(prediction);
-      } catch (err) {
-        console.error(err);
-        showToast('Something went wrong calling the AI. Check the console for details.');
-      } finally {
-        analyzeBtn.disabled = false;
-        analyzeBtn.textContent = 'Analyze with AI';
-      }
+  function renderPrediction(prediction) {
+    currentPrediction = prediction;
+    productTitleEl.textContent = prediction.productTitle;
+    valueRangeEl.textContent = prediction.valueRange;
+    demandScoreEl.textContent = prediction.demandScore + '/100';
+    confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
+    resaleWindowEl.textContent = prediction.resaleWindow;
+    summaryEl.textContent = prediction.summary;
+
+    conditionPillsEl.innerHTML = '';
+    (prediction.conditionPricing || []).forEach(cond => {
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = cond.tier + ': ' + cond.range;
+      conditionPillsEl.appendChild(pill);
     });
 
-    productInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        analyzeBtn.click();
-      }
+    resultsEl.style.display = 'block';
+    saveRecent(prediction);
+  }
+
+  // 🔑 This is the important part: send { productText } in the body.
+  async function callPredict(productText) {
+    const res = await fetch('/.netlify/functions/predict', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productText }) // 👈 matches backend
     });
-  </script>
+
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error('Predict error:', errorBody);
+      throw new Error('Prediction request failed');
+    }
+
+    return res.json();
+  }
+
+  analyzeBtn.addEventListener('click', async () => {
+    const value = productInput.value.trim();
+    if (!value) {
+      showToast('Please paste a link or product name first.');
+      return;
+    }
+    analyzeBtn.disabled = true;
+    analyzeBtn.textContent = 'Analyzing...';
+    try {
+      const prediction = await callPredict(value);
+      renderPrediction(prediction);
+    } catch (err) {
+      console.error(err);
+      showToast('Something went wrong. Please try again.');
+    } finally {
+      analyzeBtn.disabled = false;
+      analyzeBtn.textContent = 'Analyze with AI';
+    }
+  });
+
+  productInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      analyzeBtn.click();
+    }
+  });
+
+  alertBtn.addEventListener('click', () => {
+    if (!currentPrediction) {
+      showToast('Analyze a product first.');
+      return;
+    }
+    previewProduct.textContent = currentPrediction.productTitle;
+    previewValue.textContent = currentPrediction.valueRange;
+    previewDemand.textContent = `Demand: ${currentPrediction.demandScore}/100 · Confidence: ${currentPrediction.confidenceScore}/100`;
+    modalOverlay.style.display = 'flex';
+  });
+
+  modalClose.addEventListener('click', () => {
+    modalOverlay.style.display = 'none';
+  });
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      modalOverlay.style.display = 'none';
+    }
+  });
+
+  alertForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    // You can later wire this to Airtable or another flow
+    modalOverlay.style.display = 'none';
+    showToast('Alert captured (front-end only for now).');
+  });
+
+  loadRecent();
+</script>
 </body>
 </html>
