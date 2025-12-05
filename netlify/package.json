@@ -1,13 +1,8 @@
 {
   "name": "bargainbond-predictor",
   "version": "1.0.0",
-  "description": "BargainBond AI Used Value Predictor",
-  "main": "index.html",
-  "scripts": {
-    "build": "echo \"No build step\"",
-    "start": "netlify dev"
-  },
+  "private": true,
   "dependencies": {
-    "openai": "^4.58.0"
+    "openai": "^4.55.0"
   }
 }
