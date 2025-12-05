@@ -2,66 +2,249 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bargain Bond – AI Used Value Predictor (Beta)</title>
+  <title>AI Used Value Predictor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; background: #f5f5f7; color: #111827; }
-    header { background: #111827; color: white; padding: 16px 24px; display: flex; flex-direction: column; gap: 4px; }
-    header .logo { font-weight: 600; letter-spacing: 0.04em; }
-    header .tagline { font-size: 0.875rem; opacity: 0.8; }
-    main { max-width: 900px; margin: 32px auto; padding: 0 16px 48px; }
-    .card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 24px; margin-bottom: 24px; }
-    h1 { font-size: 1.8rem; margin-bottom: 8px; }
-    .subtitle { font-size: 0.95rem; color: #4b5563; margin-bottom: 24px; }
-    label { font-size: 0.9rem; font-weight: 500; display: block; margin-bottom: 6px; }
-    input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem; margin-bottom: 12px; }
-    input:focus { outline: none; border-color: #111827; box-shadow: 0 0 0 1px #11182722; }
-    button { border: none; border-radius: 999px; padding: 10px 18px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-    .btn-primary { background: #111827; color: white; }
-    .btn-primary:disabled { opacity: 0.7; cursor: default; }
-    .small { font-size: 0.8rem; color: #6b7280; }
-    .results { display: none; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 16px; }
-    .results h2 { font-size: 1.1rem; margin-bottom: 8px; }
-    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 12px 0; }
-    .result-box { background: #f9fafb; border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
-    .result-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 4px; }
-    .result-value { font-weight: 600; }
-    .pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; background: #e5e7eb; color: #111827; margin-right: 6px; margin-top: 4px; }
-    .muted { color: #6b7280; font-size: 0.9rem; }
-    .toast { position: fixed; bottom: 16px; right: 16px; background: #111827; color: white; padding: 10px 14px; border-radius: 999px; font-size: 0.85rem; display: none; z-index: 60; }
-    @media (max-width: 600px) { h1 { font-size: 1.4rem; } header { align-items: flex-start; } }
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #f5f5f7;
+      color: #111827;
+    }
+    header {
+      background: #111827;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header .logo {
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    header .tagline {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+    main {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px 48px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 0.98rem;
+      color: #4b5563;
+      margin-bottom: 24px;
+    }
+    label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #111827;
+      box-shadow: 0 0 0 1px #11182722;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: #111827;
+      color: white;
+    }
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .results {
+      display: none;
+      margin-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+    }
+    .results h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+    .result-box {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+    }
+    .result-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .result-value {
+      font-weight: 600;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      background: #e5e7eb;
+      color: #111827;
+      margin-right: 6px;
+      margin-top: 4px;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .recent-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .recent-list li {
+      font-size: 0.9rem;
+      padding: 4px 0;
+      color: #4b5563;
+    }
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #111827;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      display: none;
+      z-index: 60;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 90%;
+      padding: 20px 20px 16px;
+      box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .close-btn {
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #6b7280;
+    }
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="logo">Bargain Bond (Beta)</div>
-    <div class="tagline">Honest AI estimates of future used value & demand</div>
+    <div class="logo">AI Used Value Predictor</div>
+    <div class="tagline">Estimate future used value & demand in seconds</div>
   </header>
 
   <main>
     <section class="card">
       <h1>What will this be worth used?</h1>
       <p class="subtitle">
-        Paste a product link or name. We’ll ask an AI model to estimate future used value, demand, and resale window.
-        This is an experimental beta, not financial advice.
+        Paste any product link or name. Our AI estimates its future used value, demand, and the best time to resell.
       </p>
 
       <label for="product-input">Product link or name</label>
       <input id="product-input" type="text" placeholder="e.g. TaylorMade Stealth 2 Driver 10.5° Stiff or an Amazon URL" />
-      <button id="analyze-btn" class="btn-primary">Analyze with AI</button>
+
+      <button id="analyze-btn" class="btn-primary">
+        Analyze with AI
+      </button>
+
       <div class="small">
-        Works best for: golf clubs, baby gear, phones, laptops, cameras, tools, fitness equipment.
+        Works well for: golf clubs, baby gear, tech, tools, fitness equipment, gaming, and more.
       </div>
 
       <div id="results" class="results">
-        <h2>AI Prediction (Beta)</h2>
+        <h2>AI Prediction</h2>
         <p id="product-title" class="muted"></p>
 
         <div class="results-grid">
           <div class="result-box">
             <div class="result-label">Used value (90 days)</div>
-            <div id="value-range" class="result-value">—</div>
+            <div id="value-range" class="result-value">$—</div>
           </div>
           <div class="result-box">
             <div class="result-label">Demand score</div>
@@ -83,172 +266,154 @@
         </div>
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
+
+        <div style="margin-top: 18px;">
+          <button id="alert-btn" class="btn-secondary">
+            Notify me if someone wants to sell this used
+          </button>
+          <div class="small">
+            Alerts coming soon – this is an early beta.
+          </div>
+        </div>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>Recently analyzed (local to your browser)</h2>
+      <p class="muted">
+        These stay in your browser so you can quickly compare resale potential.
+      </p>
+      <ul id="recent-list" class="recent-list"></ul>
     </section>
   </main>
 
   <div id="toast" class="toast"></div>
 
   <script>
-  const analyzeBtn = document.getElementById('analyze-btn');
-  const productInput = document.getElementById('product-input');
-  const resultsEl = document.getElementById('results');
-  const productTitleEl = document.getElementById('product-title');
-  const valueRangeEl = document.getElementById('value-range');
-  const demandScoreEl = document.getElementById('demand-score');
-  const confidenceScoreEl = document.getElementById('confidence-score');
-  const resaleWindowEl = document.getElementById('resale-window');
-  const conditionPillsEl = document.getElementById('condition-pills');
-  const summaryEl = document.getElementById('summary');
-  const recentListEl = document.getElementById('recent-list');
+    document.addEventListener('DOMContentLoaded', () => {
+      const analyzeBtn = document.getElementById('analyze-btn');
+      const productInput = document.getElementById('product-input');
+      const resultsEl = document.getElementById('results');
+      const productTitleEl = document.getElementById('product-title');
+      const valueRangeEl = document.getElementById('value-range');
+      const demandScoreEl = document.getElementById('demand-score');
+      const confidenceScoreEl = document.getElementById('confidence-score');
+      const resaleWindowEl = document.getElementById('resale-window');
+      const conditionPillsEl = document.getElementById('condition-pills');
+      const summaryEl = document.getElementById('summary');
+      const recentListEl = document.getElementById('recent-list');
+      const alertBtn = document.getElementById('alert-btn');
+      const toast = document.getElementById('toast');
 
-  const alertBtn = document.getElementById('alert-btn');
-  const modalOverlay = document.getElementById('modal-overlay');
-  const modalClose = document.getElementById('modal-close');
-  const alertForm = document.getElementById('alert-form');
-  const toast = document.getElementById('toast');
+      function showToast(message) {
+        toast.textContent = message;
+        toast.style.display = 'block';
+        setTimeout(() => {
+          toast.style.display = 'none';
+        }, 2500);
+      }
 
-  const previewProduct = document.getElementById('preview-product');
-  const previewValue = document.getElementById('preview-value');
-  const previewDemand = document.getElementById('preview-demand');
+      function loadRecent() {
+        const stored = localStorage.getItem('bb_recent_products');
+        if (!stored) {
+          recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+          return;
+        }
+        const recent = JSON.parse(stored);
+        if (!recent.length) {
+          recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+          return;
+        }
+        recentListEl.innerHTML = '';
+        recent.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = item.title + ' – predicted used: ' + item.valueRange;
+          recentListEl.appendChild(li);
+        });
+      }
 
-  let currentPrediction = null;
+      function saveRecent(prediction) {
+        const stored = localStorage.getItem('bb_recent_products');
+        let recent = stored ? JSON.parse(stored) : [];
+        recent.unshift({
+          title: prediction.productTitle,
+          valueRange: prediction.valueRange
+        });
+        recent = recent.slice(0, 5);
+        localStorage.setItem('bb_recent_products', JSON.stringify(recent));
+        loadRecent();
+      }
 
-  function showToast(message) {
-    toast.textContent = message;
-    toast.style.display = 'block';
-    setTimeout(() => {
-      toast.style.display = 'none';
-    }, 2500);
-  }
+      async function callPredict(productText) {
+        const res = await fetch('/.netlify/functions/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productText })
+        });
 
-  function loadRecent() {
-    const stored = localStorage.getItem('bb_recent_products');
-    if (!stored) {
-      recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
-      return;
-    }
-    const recent = JSON.parse(stored);
-    if (!recent.length) {
-      recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
-      return;
-    }
-    recentListEl.innerHTML = '';
-    recent.forEach(item => {
-      const li = document.createElement('li');
-      li.textContent = item.title + ' – predicted used: ' + item.valueRange;
-      recentListEl.appendChild(li);
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Predict error:', errorText);
+          throw new Error('Prediction request failed');
+        }
+
+        const data = await res.json();
+        return data.prediction;
+      }
+
+      async function handleAnalyze() {
+        const value = productInput.value.trim();
+        if (!value) {
+          showToast('Please paste a link or product name first.');
+          return;
+        }
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Analyzing...';
+        try {
+          const prediction = await callPredict(value);
+
+          productTitleEl.textContent = prediction.productTitle;
+          valueRangeEl.textContent = prediction.valueRange;
+          demandScoreEl.textContent = prediction.demandScore + '/100';
+          confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
+          resaleWindowEl.textContent = prediction.resaleWindow;
+          summaryEl.textContent = prediction.summary;
+
+          conditionPillsEl.innerHTML = '';
+          prediction.conditionPricing.forEach(cond => {
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = cond.tier + ': ' + cond.range;
+            conditionPillsEl.appendChild(pill);
+          });
+
+          resultsEl.style.display = 'block';
+          saveRecent(prediction);
+        } catch (err) {
+          console.error(err);
+          showToast('Something went wrong. Please try again.');
+        } finally {
+          analyzeBtn.disabled = false;
+          analyzeBtn.textContent = 'Analyze with AI';
+        }
+      }
+
+      analyzeBtn.addEventListener('click', handleAnalyze);
+      productInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAnalyze();
+        }
+      });
+
+      alertBtn.addEventListener('click', () => {
+        showToast('Alerts coming soon – beta is prediction-only right now.');
+      });
+
+      loadRecent();
     });
-  }
-
-  function saveRecent(prediction) {
-    const stored = localStorage.getItem('bb_recent_products');
-    let recent = stored ? JSON.parse(stored) : [];
-    recent.unshift({
-      title: prediction.productTitle,
-      valueRange: prediction.valueRange
-    });
-    recent = recent.slice(0, 5);
-    localStorage.setItem('bb_recent_products', JSON.stringify(recent));
-    loadRecent();
-  }
-
-  function renderPrediction(prediction) {
-    currentPrediction = prediction;
-    productTitleEl.textContent = prediction.productTitle;
-    valueRangeEl.textContent = prediction.valueRange;
-    demandScoreEl.textContent = prediction.demandScore + '/100';
-    confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
-    resaleWindowEl.textContent = prediction.resaleWindow;
-    summaryEl.textContent = prediction.summary;
-
-    conditionPillsEl.innerHTML = '';
-    (prediction.conditionPricing || []).forEach(cond => {
-      const pill = document.createElement('span');
-      pill.className = 'pill';
-      pill.textContent = cond.tier + ': ' + cond.range;
-      conditionPillsEl.appendChild(pill);
-    });
-
-    resultsEl.style.display = 'block';
-    saveRecent(prediction);
-  }
-
-  // 🔑 This is the important part: send { productText } in the body.
-  async function callPredict(productText) {
-    const res = await fetch('/.netlify/functions/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ productText }) // 👈 matches backend
-    });
-
-    if (!res.ok) {
-      const errorBody = await res.text();
-      console.error('Predict error:', errorBody);
-      throw new Error('Prediction request failed');
-    }
-
-    return res.json();
-  }
-
-  analyzeBtn.addEventListener('click', async () => {
-    const value = productInput.value.trim();
-    if (!value) {
-      showToast('Please paste a link or product name first.');
-      return;
-    }
-    analyzeBtn.disabled = true;
-    analyzeBtn.textContent = 'Analyzing...';
-    try {
-      const prediction = await callPredict(value);
-      renderPrediction(prediction);
-    } catch (err) {
-      console.error(err);
-      showToast('Something went wrong. Please try again.');
-    } finally {
-      analyzeBtn.disabled = false;
-      analyzeBtn.textContent = 'Analyze with AI';
-    }
-  });
-
-  productInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      analyzeBtn.click();
-    }
-  });
-
-  alertBtn.addEventListener('click', () => {
-    if (!currentPrediction) {
-      showToast('Analyze a product first.');
-      return;
-    }
-    previewProduct.textContent = currentPrediction.productTitle;
-    previewValue.textContent = currentPrediction.valueRange;
-    previewDemand.textContent = `Demand: ${currentPrediction.demandScore}/100 · Confidence: ${currentPrediction.confidenceScore}/100`;
-    modalOverlay.style.display = 'flex';
-  });
-
-  modalClose.addEventListener('click', () => {
-    modalOverlay.style.display = 'none';
-  });
-
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      modalOverlay.style.display = 'none';
-    }
-  });
-
-  alertForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    // You can later wire this to Airtable or another flow
-    modalOverlay.style.display = 'none';
-    showToast('Alert captured (front-end only for now).');
-  });
-
-  loadRecent();
-</script>
+  </script>
 </body>
 </html>
