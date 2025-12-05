@@ -1,48 +1,87 @@
 // netlify/functions/predict.js
 
-export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+exports.handler = async (event, context) => {
+  // Allow only POST
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Method Not Allowed" }),
+    };
+  }
+
+  if (!OPENAI_API_KEY) {
+    console.error("Missing OPENAI_API_KEY env var");
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Server not configured (missing API key)" }),
+    };
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Invalid JSON body" }),
+    };
+  }
+
+  const productText = (body.productText || "").trim();
+
+  if (!productText) {
+    return {
+      statusCode: 400,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "productText is required" }),
     };
   }
 
   try {
-    const { product } = JSON.parse(event.body || '{}');
-    if (!product) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing "product" in request body' }),
-      };
-    }
+    // Call OpenAI "responses" endpoint directly with fetch
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: [
+          {
+            role: "system",
+            content: `
+You are an expert in used-market pricing and resale behavior.
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      console.error('OPENAI_API_KEY is not set');
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Server not configured with API key' }),
-      };
-    }
+Given a short product description, estimate:
 
-    const prompt = `
-You are an expert in used-market pricing (like Reverb, StockX, eBay, and Facebook Marketplace combined).
+1. predicted used value range in 90 days (low and high USD)
+2. demand score (0-100)
+3. confidence score (0-100)
+4. best resale window (short human sentence)
+5. condition-based pricing:
+   - A1 (like new)
+   - A2 (very good)
+   - B1 (good)
+   - B2 (fair but fully functional)
+6. a short summary sentence.
 
-Given a product the user is thinking of buying NEW, estimate:
-- What it will likely be worth used in about 90 days
-- How strong demand will be on the used market
-- How confident you are in this estimate
-- The best resale window
-- Condition-based pricing bands
+Important: 
+- You MUST respond with a single JSON object ONLY. 
+- No extra text, no explanation, no markdown.
 
-Return ONLY valid JSON with this exact shape:
+The JSON shape MUST be:
 
 {
   "productTitle": "string",
-  "valueRange": "string, like \"$250–$290\"",
-  "demandScore": 0-100,
-  "confidenceScore": 0-100,
+  "valueRange": "string, like \"$250 – $300\"",
+  "demandScore": number,
+  "confidenceScore": number,
   "resaleWindow": "string",
   "conditionPricing": [
     { "tier": "A1", "range": "string" },
@@ -50,69 +89,88 @@ Return ONLY valid JSON with this exact shape:
     { "tier": "B1", "range": "string" },
     { "tier": "B2", "range": "string" }
   ],
-  "summary": "1–3 sentence summary explaining the estimate to a normal person."
+  "summary": "string"
 }
-
-Product description:
-"${product}"
-    `.trim();
-
-    // Call OpenAI Chat Completions API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a precise, honest used-market pricing assistant.' },
-          { role: 'user', content: prompt }
+            `.trim()
+          },
+          {
+            role: "user",
+            content: `Product: ${productText}`
+          }
         ],
-        temperature: 0.4,
-      }),
+        // Tell it we want JSON back
+        response_format: { type: "json_object" }
+      })
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      console.error('OpenAI error:', text);
+      const errText = await response.text();
+      console.error("OpenAI API error:", errText);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'OpenAI API error', details: text }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "OpenAI API error", details: errText })
       };
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
 
-    // Try to parse the JSON from the model's response
-    let parsed;
+    // The "output" field holds response content; for responses API,
+    // the model's JSON will usually be in data.output[0].content[0].text;
+    // but we'll handle a couple variants defensively.
+    let rawText = "";
+
     try {
-      // Sometimes the model might wrap JSON in ```json ``` fences; strip them.
-      const cleaned = content.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-      parsed = JSON.parse(cleaned);
-    } catch (err) {
-      console.error('Failed to parse JSON from model:', content);
+      const firstOutput = data.output && data.output[0];
+      const firstContent = firstOutput && firstOutput.content && firstOutput.content[0];
+      rawText = (firstContent && firstContent.text) || "";
+    } catch (e) {
+      console.error("Error extracting rawText from OpenAI response:", e, data);
+    }
+
+    if (!rawText) {
+      console.error("Empty model response:", data);
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to parse AI response as JSON' }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Empty model response" })
+      };
+    }
+
+    let prediction;
+    try {
+      prediction = JSON.parse(rawText);
+    } catch (e) {
+      console.error("Failed to parse JSON from model response:", rawText);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Failed to parse JSON from model", raw: rawText })
+      };
+    }
+
+    // Basic sanity check
+    if (!prediction.productTitle || !prediction.valueRange) {
+      console.error("Prediction missing expected fields:", prediction);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Prediction missing fields", prediction })
       };
     }
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(parsed),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(prediction)
     };
+
   } catch (err) {
-    console.error('Unexpected error in predict function:', err);
+    console.error("Server error:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Unexpected server error' }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Server error", details: String(err) })
     };
   }
-}
+};
