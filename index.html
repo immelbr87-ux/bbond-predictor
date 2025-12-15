@@ -1,3 +1,8 @@
+
+Brian Immel <immelbr87@gmail.com>
+10:03 AM (0 minutes ago)
+to me
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,6 +172,8 @@
       display: none;
       z-index: 60;
     }
+
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -175,12 +182,13 @@
       align-items: center;
       justify-content: center;
       z-index: 50;
+      padding: 16px;
     }
     .modal {
       background: white;
       border-radius: 12px;
       max-width: 420px;
-      width: 90%;
+      width: 100%;
       padding: 20px 20px 16px;
       box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
     }
@@ -200,11 +208,18 @@
       font-size: 1.2rem;
       cursor: pointer;
       color: #6b7280;
+      padding: 6px 10px;
+      border-radius: 8px;
     }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
-      h1 {
-        font-size: 1.4rem;
-      }
+      h1 { font-size: 1.4rem; }
       header {
         flex-direction: column;
         align-items: flex-start;
@@ -213,6 +228,7 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo">AI Used Value Predictor</div>
@@ -227,14 +243,14 @@
       </p>
 
       <label for="product-input">Product link or name</label>
-      <input id="product-input" type="text" placeholder="e.g. TaylorMade Stealth 2 Driver 10.5° Stiff or an Amazon URL" />
+      <input id="product-input" type="text" placeholder="e.g. Ridgid ProPress tool or an Amazon URL" />
 
       <button id="analyze-btn" class="btn-primary">
         Analyze with AI
       </button>
 
       <div class="small">
-        Works well for: golf clubs, baby gear, tech, tools, fitness equipment, gaming, and more.
+        Works well for: tools, baby gear, tech, fitness equipment, gaming, and more.
       </div>
 
       <div id="results" class="results">
@@ -267,13 +283,17 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
-        <div style="margin-top: 18px;">
-          <button id="alert-btn" class="btn-secondary">
+        <!-- ✅ TWO NOTIFY BUTTONS -->
+        <div style="margin-top: 18px; display:flex; gap:12px; flex-wrap:wrap;">
+          <button id="notify-sell-used-btn" class="btn-secondary" type="button">
             Notify me if someone wants to sell this used
           </button>
-          <div class="small">
-            Alerts coming soon – this is an early beta.
-          </div>
+          <button id="notify-buy-used-btn" class="btn-secondary" type="button">
+            Notify me if someone wants to buy this used
+          </button>
+        </div>
+        <div class="small" style="margin-top:8px;">
+          This saves your request so we can notify you later. (Early beta)
         </div>
       </div>
     </section>
@@ -289,8 +309,62 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- ✅ MODAL -->
+  <div id="bb-modal-overlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bb-modal-title">
+      <div class="modal-header">
+        <div id="bb-modal-title" class="modal-title">Notify me</div>
+        <button id="bb-close" class="close-btn" type="button">✕</button>
+      </div>
+
+      <label for="bb-email">Email</label>
+      <input id="bb-email" type="email" placeholder="you@email.com" />
+
+      <label for="bb-note">Optional note (price / timing)</label>
+      <input id="bb-note" type="text" placeholder="e.g. under $400 within 3 months" />
+
+      <div class="modal-actions">
+        <button id="bb-cancel" class="btn-secondary" type="button">Cancel</button>
+        <button id="bb-submit" class="btn-primary" type="button">Submit</button>
+      </div>
+
+      <p id="bb-status" class="muted" style="margin:10px 0 0 0;"></p>
+    </div>
+  </div>
+
+  <!-- ✅ NETLIFY FORMS MUST EXIST IN THE BUILT HTML -->
+  <!-- NOTE: names MUST match what JS submits -->
+  <form name="notify_when_used_available" method="POST" data-netlify="true" hidden>
+    <input type="text" name="session_id" />
+    <input type="text" name="intent_type" />
+    <input type="email" name="email" />
+    <input type="text" name="note" />
+    <input type="text" name="product_text" />
+    <input type="text" name="product_title" />
+    <input type="text" name="value_range" />
+    <input type="text" name="demand_score" />
+    <input type="text" name="confidence_score" />
+    <input type="text" name="resale_window" />
+    <input type="text" name="timestamp" />
+  </form>
+
+  <form name="notify_when_buyer_exists" method="POST" data-netlify="true" hidden>
+    <input type="text" name="session_id" />
+    <input type="text" name="intent_type" />
+    <input type="email" name="email" />
+    <input type="text" name="note" />
+    <input type="text" name="product_text" />
+    <input type="text" name="product_title" />
+    <input type="text" name="value_range" />
+    <input type="text" name="demand_score" />
+    <input type="text" name="confidence_score" />
+    <input type="text" name="resale_window" />
+    <input type="text" name="timestamp" />
+  </form>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // ---------- DOM ----------
       const analyzeBtn = document.getElementById('analyze-btn');
       const productInput = document.getElementById('product-input');
       const resultsEl = document.getElementById('results');
@@ -302,16 +376,67 @@
       const conditionPillsEl = document.getElementById('condition-pills');
       const summaryEl = document.getElementById('summary');
       const recentListEl = document.getElementById('recent-list');
-      const alertBtn = document.getElementById('alert-btn');
       const toast = document.getElementById('toast');
 
+      // Notify buttons
+      const notifySellBtn = document.getElementById('notify-sell-used-btn');
+      const notifyBuyBtn = document.getElementById('notify-buy-used-btn');
+
+      // Modal
+      const modalOverlay = document.getElementById('bb-modal-overlay');
+      const modalTitle = document.getElementById('bb-modal-title');
+      const modalEmail = document.getElementById('bb-email');
+      const modalNote = document.getElementById('bb-note');
+      const modalStatus = document.getElementById('bb-status');
+      const modalClose = document.getElementById('bb-close');
+      const modalCancel = document.getElementById('bb-cancel');
+      const modalSubmit = document.getElementById('bb-submit');
+
+      // ---------- Helpers ----------
       function showToast(message) {
         toast.textContent = message;
         toast.style.display = 'block';
-        setTimeout(() => {
-          toast.style.display = 'none';
-        }, 2500);
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
+
+      // Session ID (so you can group submissions)
+      function getSessionId() {
+        const key = 'bb_session_id';
+        let id = localStorage.getItem(key);
+        if (!id) {
+          id = 'bb_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem(key, id);
+        }
+        return id;
+      }
+
+      // Netlify form submit (works without visible form)
+      function encode(data) {
+        return Object.keys(data)
+          .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
+          .join("&");
+      }
+
+      async function submitNetlifyForm(formName, fields) {
+        const payload = { "form-name": formName, ...fields };
+        const res = await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: encode(payload),
+        });
+        if (!res.ok) throw new Error("Netlify form submit failed: " + res.status);
+        return true;
+      }
+
+      // Store the last prediction context so notify can attach it
+      const last = {
+        productText: "",
+        productTitle: "",
+        valueRange: "",
+        demandScore: "",
+        confidenceScore: "",
+        resaleWindow: ""
+      };
 
       function loadRecent() {
         const stored = localStorage.getItem('bb_recent_products');
@@ -335,10 +460,7 @@
       function saveRecent(prediction) {
         const stored = localStorage.getItem('bb_recent_products');
         let recent = stored ? JSON.parse(stored) : [];
-        recent.unshift({
-          title: prediction.productTitle,
-          valueRange: prediction.valueRange
-        });
+        recent.unshift({ title: prediction.productTitle, valueRange: prediction.valueRange });
         recent = recent.slice(0, 5);
         localStorage.setItem('bb_recent_products', JSON.stringify(recent));
         loadRecent();
@@ -347,10 +469,11 @@
       async function callPredict(productText) {
         const res = await fetch('/.netlify/functions/predict', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ productText })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productText,
+            session_id: getSessionId()
+          })
         });
 
         if (!res.ok) {
@@ -369,11 +492,14 @@
           showToast('Please paste a link or product name first.');
           return;
         }
+
         analyzeBtn.disabled = true;
         analyzeBtn.textContent = 'Analyzing...';
+
         try {
           const prediction = await callPredict(value);
 
+          // Update UI
           productTitleEl.textContent = prediction.productTitle;
           valueRangeEl.textContent = prediction.valueRange;
           demandScoreEl.textContent = prediction.demandScore + '/100';
@@ -391,6 +517,15 @@
 
           resultsEl.style.display = 'block';
           saveRecent(prediction);
+
+          // Save context for notify submissions
+          last.productText = value;
+          last.productTitle = prediction.productTitle || "";
+          last.valueRange = prediction.valueRange || "";
+          last.demandScore = String(prediction.demandScore ?? "");
+          last.confidenceScore = String(prediction.confidenceScore ?? "");
+          last.resaleWindow = prediction.resaleWindow || "";
+
         } catch (err) {
           console.error(err);
           showToast('Something went wrong. Please try again.');
@@ -408,24 +543,105 @@
         }
       });
 
-      alertBtn.addEventListener('click', () => {
-        showToast('Alerts coming soon – beta is prediction-only right now.');
+      // ---------- Modal open/close ----------
+      let currentFormName = null;
+      let currentIntentType = null;
+
+      function openModal(formName, titleText, intentType) {
+        if (!last.productTitle) {
+          showToast("Run an analysis first, then set an alert.");
+          return;
+        }
+        currentFormName = formName;
+        currentIntentType = intentType;
+
+        modalTitle.textContent = titleText;
+        modalEmail.value = "";
+        modalNote.value = "";
+        modalStatus.textContent = "";
+        modalOverlay.style.display = "flex";
+        modalOverlay.setAttribute("aria-hidden", "false");
+        setTimeout(() => modalEmail.focus(), 50);
+      }
+
+      function closeModal() {
+        modalOverlay.style.display = "none";
+        modalOverlay.setAttribute("aria-hidden", "true");
+        currentFormName = null;
+        currentIntentType = null;
+      }
+
+      modalClose.addEventListener('click', closeModal);
+      modalCancel.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
+      });
+
+      // ---------- Notify buttons ----------
+      notifySellBtn.addEventListener('click', () => {
+        openModal(
+          "notify_when_used_available",
+          "Notify me if someone wants to sell this used",
+          "buyer_notify_used_available"
+        );
+      });
+
+      notifyBuyBtn.addEventListener('click', () => {
+        openModal(
+          "notify_when_buyer_exists",
+          "Notify me if someone wants to buy this used",
+          "seller_notify_buyer_exists"
+        );
+      });
+
+      // ---------- Submit ----------
+      modalSubmit.addEventListener('click', async () => {
+        const email = (modalEmail.value || "").trim();
+        const note = (modalNote.value || "").trim();
+
+        if (!email || !email.includes("@")) {
+          modalStatus.textContent = "Please enter a valid email.";
+          return;
+        }
+
+        modalStatus.textContent = "Submitting...";
+        modalSubmit.disabled = true;
+
+        try {
+          await submitNetlifyForm(currentFormName, {
+            session_id: getSessionId(),
+            intent_type: currentIntentType,
+            email,
+            note,
+            product_text: last.productText,
+            product_title: last.productTitle,
+            value_range: last.valueRange,
+            demand_score: last.demandScore,
+            confidence_score: last.confidenceScore,
+            resale_window: last.resaleWindow,
+            timestamp: new Date().toISOString()
+          });
+
+          modalStatus.textContent = "✅ Saved. We’ll notify you later.";
+          setTimeout(() => {
+            modalSubmit.disabled = false;
+            closeModal();
+            showToast("Alert saved.");
+          }, 800);
+
+        } catch (err) {
+          console.error(err);
+          modalStatus.textContent = "❌ Submit failed. Try again.";
+          modalSubmit.disabled = false;
+        }
       });
 
       loadRecent();
+      getSessionId(); // initialize session id
     });
   </script>
-<body>
-  <!-- your app UI -->
-
-  <!-- Netlify forms must exist in built HTML -->
-  <form name="notify_when_used_available" method="POST" data-netlify="true" hidden>
-    <input type="email" name="email" />
-  </form>
-
-  <form name="notify_when_buyer_exists" method="POST" data-netlify="true" hidden>
-    <input type="email" name="email" />
-  </form>
-</body>
 </body>
 </html>
