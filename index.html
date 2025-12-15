@@ -53,19 +53,20 @@
     }
     label {
       font-size: 0.9rem;
-      font-weight: 500;
+      font-weight: 600;
       display: block;
       margin-bottom: 6px;
     }
-    input {
+    input, select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 8px;
       border: 1px solid #d1d5db;
       font-size: 0.95rem;
       margin-bottom: 12px;
+      background: white;
     }
-    input:focus {
+    input:focus, select:focus {
       outline: none;
       border-color: #111827;
       box-shadow: 0 0 0 1px #11182722;
@@ -79,7 +80,6 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 8px;
     }
     .btn-primary {
@@ -93,7 +93,6 @@
     .btn-secondary {
       background: #e5e7eb;
       color: #111827;
-      font-weight: 600;
     }
     .small {
       font-size: 0.8rem;
@@ -121,7 +120,6 @@
       border-radius: 10px;
       padding: 10px 12px;
       font-size: 0.9rem;
-      border: 1px solid #eef2f7;
     }
     .result-label {
       font-size: 0.8rem;
@@ -143,7 +141,6 @@
       color: #111827;
       margin-right: 6px;
       margin-top: 4px;
-      font-weight: 600;
     }
     .muted {
       color: #6b7280;
@@ -186,7 +183,7 @@
     .modal {
       background: white;
       border-radius: 12px;
-      max-width: 420px;
+      max-width: 460px;
       width: 100%;
       padding: 20px 20px 16px;
       box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
@@ -198,8 +195,8 @@
       margin-bottom: 8px;
     }
     .modal-title {
-      font-size: 1.05rem;
-      font-weight: 800;
+      font-size: 1.1rem;
+      font-weight: 700;
     }
     .close-btn {
       border: none;
@@ -222,7 +219,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 10px 0 6px;
+      margin: 10px 0 10px;
     }
     .toggle {
       width: 44px;
@@ -232,7 +229,6 @@
       position: relative;
       cursor: pointer;
       flex: 0 0 auto;
-      border: 1px solid #d1d5db;
     }
     .toggle::after {
       content: "";
@@ -248,79 +244,61 @@
     }
     .toggle[data-on="true"] {
       background: #111827;
-      border-color: #111827;
     }
     .toggle[data-on="true"]::after {
       transform: translateX(18px);
     }
 
-    /* Action chooser (replaces confusing "next smartest step" + extra buttons) */
-    .action-card-wrap {
-      margin-top: 14px;
-      padding-top: 14px;
+    /* Alert cards (replaces confusing section + buttons) */
+    .alert-section {
+      margin-top: 18px;
       border-top: 1px solid #e5e7eb;
+      padding-top: 14px;
     }
-    .action-title {
-      font-size: 1.02rem;
+    .alert-title {
       font-weight: 800;
-      margin: 0 0 6px 0;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
     }
-    .action-subtitle {
-      margin: 0 0 10px 0;
+    .alert-sub {
       color: #6b7280;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+      margin-bottom: 10px;
     }
-    .action-grid {
+    .alert-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
-      margin-top: 10px;
     }
-    .action-card {
+    .alert-card {
       border: 1px solid #d1d5db;
-      background: #f9fafb;
       border-radius: 12px;
       padding: 12px 12px;
+      background: #f9fafb;
       cursor: pointer;
-      transition: transform 0.05s ease;
-    }
-    .action-card:active { transform: scale(0.99); }
-    .action-card .headline {
-      font-weight: 800;
-      font-size: 0.98rem;
-      margin-bottom: 6px;
-      color: #111827;
-    }
-    .action-card .desc {
-      font-size: 0.88rem;
-      color: #4b5563;
-      line-height: 1.35;
-    }
-    .action-card[data-selected="true"] {
-      border: 2px solid #111827;
-      background: white;
-    }
-    .action-card[data-selected="true"] .headline {
-      color: #111827;
-    }
-    .action-cta-row {
+      transition: transform 0.05s ease, border-color 0.12s ease, background 0.12s ease;
+      user-select: none;
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 12px;
+      flex-direction: column;
+      gap: 6px;
     }
-    .action-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
-      color: #374151;
-      font-size: 0.85rem;
-      font-weight: 600;
+    .alert-card:hover {
+      border-color: #111827;
+    }
+    .alert-card.active {
+      background: #ffffff;
+      border-color: #111827;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+    }
+    .alert-card .t {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #111827;
+    }
+    .alert-card .d {
+      font-size: 0.86rem;
+      color: #4b5563;
+      line-height: 1.25rem;
     }
 
     @media (max-width: 600px) {
@@ -350,18 +328,36 @@
       <label for="product-input">Product link or name</label>
       <input id="product-input" type="text" placeholder="e.g. Ridgid ProPress tool or an Amazon URL" />
 
+      <label for="product-category">Category</label>
+      <select id="product-category">
+        <option value="">Select a category (optional)</option>
+        <option value="tools">Tools</option>
+        <option value="baby_gear">Baby gear</option>
+        <option value="electronics">Electronics</option>
+        <option value="sporting_goods">Sporting goods</option>
+        <option value="fitness">Fitness</option>
+        <option value="gaming">Gaming</option>
+        <option value="furniture">Furniture</option>
+        <option value="other">Other</option>
+      </select>
+      <div class="small" style="margin-top:-6px; margin-bottom:10px;">
+        Helps us match future buyers/sellers and local pickup rules by category.
+      </div>
+
       <!-- Local preference -->
       <div class="toggle-row">
         <div id="local-toggle" class="toggle" data-on="false" role="switch" aria-checked="false" tabindex="0"></div>
         <div>
-          <div style="font-weight:800; font-size:0.92rem;">Prefer local pickup if possible</div>
-          <div class="small">We’ll prioritize nearby matches for bulky or expensive-to-ship items (beta).</div>
+          <div style="font-weight:800; font-size:0.92rem;">Prefer local resale if available</div>
+          <div class="small">We’ll prioritize nearby buyers/pickup when possible (beta).</div>
         </div>
       </div>
 
-      <button id="analyze-btn" class="btn-primary" type="button">Analyze with AI</button>
+      <button id="analyze-btn" class="btn-primary" type="button">
+        Analyze with AI
+      </button>
 
-      <div class="small" style="margin-top:8px;">
+      <div class="small" style="margin-top:10px;">
         Works well for: tools, baby gear, tech, fitness equipment, gaming, and more.
       </div>
 
@@ -395,38 +391,32 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
-        <!-- Action chooser (replaces duplicate notify buttons) -->
-        <div class="action-card-wrap">
-          <p class="action-title">What do you want to do with this item?</p>
-          <p class="action-subtitle">Pick one, then we’ll save an alert and email you when there’s a match.</p>
+        <!-- One clear alert section (no duplicate "next step" + no confusing bottom buttons) -->
+        <div class="alert-section">
+          <div class="alert-title">Set an alert</div>
+          <div class="alert-sub">Save your request and we’ll notify you when a match exists (early beta).</div>
 
-          <div class="action-grid">
-            <div id="card-buy" class="action-card" data-selected="true" role="button" tabindex="0" aria-pressed="true">
-              <div class="headline">I want to buy this used</div>
-              <div class="desc">Save my price/timing. If a seller posts this item, notify me.</div>
+          <div class="alert-grid">
+            <div id="alert-card-sell" class="alert-card" role="button" tabindex="0" aria-label="Notify me if someone wants to sell this used">
+              <div class="t">Notify me if someone wants to sell this used</div>
+              <div class="d">Best when you want to buy used later and don’t want to hunt.</div>
             </div>
 
-            <div id="card-sell" class="action-card" data-selected="false" role="button" tabindex="0" aria-pressed="false">
-              <div class="headline">I plan to sell this later</div>
-              <div class="desc">If a buyer is looking for this item, notify me so I can lock in a resale.</div>
+            <div id="alert-card-buy" class="alert-card" role="button" tabindex="0" aria-label="Notify me if someone wants to buy this used">
+              <div class="t">Notify me if someone wants to buy this used</div>
+              <div class="d">Best when you may sell later and want proof of demand.</div>
             </div>
-          </div>
-
-          <div class="action-cta-row">
-            <button id="set-alert-btn" class="btn-primary" type="button">Set alert</button>
-            <span class="action-pill">Early beta • saves to Netlify Forms</span>
-          </div>
-
-          <div class="small" style="margin-top:8px;">
-            Tip: turn on <b>local pickup</b> above if shipping would be expensive.
           </div>
         </div>
+
       </div>
     </section>
 
     <section class="card">
       <h2>Recently analyzed (local to your browser)</h2>
-      <p class="muted">These stay in your browser so you can quickly compare resale potential.</p>
+      <p class="muted">
+        These stay in your browser so you can quickly compare resale potential.
+      </p>
       <ul id="recent-list" class="recent-list"></ul>
     </section>
   </main>
@@ -437,7 +427,7 @@
   <div id="bb-modal-overlay" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bb-modal-title">
       <div class="modal-header">
-        <div id="bb-modal-title" class="modal-title">Set alert</div>
+        <div id="bb-modal-title" class="modal-title">Notify me</div>
         <button id="bb-close" class="close-btn" type="button">✕</button>
       </div>
 
@@ -456,13 +446,15 @@
     </div>
   </div>
 
-  <!-- Netlify forms must exist in built HTML -->
+  <!-- NETLIFY FORMS MUST EXIST IN BUILT HTML -->
+  <!-- IMPORTANT: add honeypot & matching names -->
   <form name="notify_when_used_available" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="notify_when_used_available" />
     <input type="hidden" name="bot-field" />
     <input type="text" name="session_id" />
     <input type="text" name="intent_type" />
     <input type="text" name="prefer_local" />
+    <input type="text" name="product_category" />
     <input type="email" name="email" />
     <input type="text" name="note" />
     <input type="text" name="product_text" />
@@ -480,6 +472,7 @@
     <input type="text" name="session_id" />
     <input type="text" name="intent_type" />
     <input type="text" name="prefer_local" />
+    <input type="text" name="product_category" />
     <input type="email" name="email" />
     <input type="text" name="note" />
     <input type="text" name="product_text" />
@@ -493,9 +486,10 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // DOM
+      // ---------- DOM ----------
       const analyzeBtn = document.getElementById('analyze-btn');
       const productInput = document.getElementById('product-input');
+      const productCategory = document.getElementById('product-category');
       const resultsEl = document.getElementById('results');
       const productTitleEl = document.getElementById('product-title');
       const valueRangeEl = document.getElementById('value-range');
@@ -507,13 +501,12 @@
       const recentListEl = document.getElementById('recent-list');
       const toast = document.getElementById('toast');
 
-      // Local toggle
+      // Local preference toggle
       const localToggle = document.getElementById('local-toggle');
 
-      // Action chooser
-      const cardBuy = document.getElementById('card-buy');
-      const cardSell = document.getElementById('card-sell');
-      const setAlertBtn = document.getElementById('set-alert-btn');
+      // Alert cards
+      const alertCardSell = document.getElementById('alert-card-sell');
+      const alertCardBuy = document.getElementById('alert-card-buy');
 
       // Modal
       const modalOverlay = document.getElementById('bb-modal-overlay');
@@ -525,13 +518,14 @@
       const modalCancel = document.getElementById('bb-cancel');
       const modalSubmit = document.getElementById('bb-submit');
 
+      // ---------- Helpers ----------
       function showToast(message) {
         toast.textContent = message;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
-      // Session ID
+      // Session ID (group submissions)
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -542,9 +536,13 @@
         return id;
       }
 
-      // Prefer local
-      function getPreferLocal() { return localStorage.getItem('bb_prefer_local') === 'true'; }
-      function setPreferLocal(val) { localStorage.setItem('bb_prefer_local', val ? 'true' : 'false'); }
+      // Local preference in browser
+      function getPreferLocal() {
+        return localStorage.getItem('bb_prefer_local') === 'true';
+      }
+      function setPreferLocal(val) {
+        localStorage.setItem('bb_prefer_local', val ? 'true' : 'false');
+      }
       function renderToggle() {
         const on = getPreferLocal();
         localToggle.setAttribute('data-on', on ? 'true' : 'false');
@@ -563,7 +561,7 @@
         }
       });
 
-      // Netlify submit helpers
+      // Netlify form submit (with honeypot payload)
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
@@ -571,8 +569,11 @@
       }
 
       async function submitNetlifyForm(formName, fields) {
-        // ✅ honeypot field included in payload:
-        const payload = { "form-name": formName, "bot-field": "", ...fields };
+        const payload = {
+          "form-name": formName,
+          "bot-field": "", // honeypot value must exist in payload
+          ...fields
+        };
 
         const res = await fetch("/", {
           method: "POST",
@@ -584,7 +585,7 @@
         return true;
       }
 
-      // Keep last prediction context
+      // Store last prediction context so alerts can attach it
       const last = {
         productText: "",
         productTitle: "",
@@ -593,6 +594,10 @@
         confidenceScore: "",
         resaleWindow: ""
       };
+
+      function getCategoryValue() {
+        return (productCategory && productCategory.value) ? productCategory.value : "";
+      }
 
       function loadRecent() {
         const stored = localStorage.getItem('bb_recent_products');
@@ -629,7 +634,8 @@
           body: JSON.stringify({
             productText,
             session_id: getSessionId(),
-            prefer_local: getPreferLocal()
+            prefer_local: getPreferLocal(),
+            product_category: getCategoryValue()
           })
         });
 
@@ -656,12 +662,12 @@
         try {
           const prediction = await callPredict(value);
 
-          productTitleEl.textContent = prediction.productTitle;
-          valueRangeEl.textContent = prediction.valueRange;
-          demandScoreEl.textContent = prediction.demandScore + '/100';
-          confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
-          resaleWindowEl.textContent = prediction.resaleWindow;
-          summaryEl.textContent = prediction.summary;
+          productTitleEl.textContent = prediction.productTitle || "";
+          valueRangeEl.textContent = prediction.valueRange || "";
+          demandScoreEl.textContent = (prediction.demandScore ?? "—") + '/100';
+          confidenceScoreEl.textContent = (prediction.confidenceScore ?? "—") + '/100';
+          resaleWindowEl.textContent = prediction.resaleWindow || "";
+          summaryEl.textContent = prediction.summary || "";
 
           conditionPillsEl.innerHTML = '';
           (prediction.conditionPricing || []).forEach(cond => {
@@ -698,56 +704,33 @@
         }
       });
 
-      // Action chooser selection (clicked one becomes bold/active)
-      function setSelected(which) {
-        const buy = which === 'buy';
-        cardBuy.setAttribute('data-selected', buy ? 'true' : 'false');
-        cardSell.setAttribute('data-selected', buy ? 'false' : 'true');
-        cardBuy.setAttribute('aria-pressed', buy ? 'true' : 'false');
-        cardSell.setAttribute('aria-pressed', buy ? 'false' : 'true');
-        localStorage.setItem('bb_action_choice', buy ? 'buy' : 'sell');
-      }
-      function getSelected() {
-        const stored = localStorage.getItem('bb_action_choice');
-        return (stored === 'sell') ? 'sell' : 'buy';
-      }
-
-      function wireCard(cardEl, which) {
-        cardEl.addEventListener('click', () => setSelected(which));
-        cardEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setSelected(which);
-          }
-        });
-      }
-      wireCard(cardBuy, 'buy');
-      wireCard(cardSell, 'sell');
-
-      // Modal open/close
+      // ---------- Modal open/close ----------
       let currentFormName = null;
       let currentIntentType = null;
 
-      function openModalForSelectedAction() {
+      function setActiveCard(which) {
+        // "which" = "sell" or "buy"
+        if (which === "sell") {
+          alertCardSell.classList.add('active');
+          alertCardBuy.classList.remove('active');
+        } else {
+          alertCardBuy.classList.add('active');
+          alertCardSell.classList.remove('active');
+        }
+      }
+
+      function openModal(formName, titleText, intentType, setActiveWhich) {
         if (!last.productTitle) {
           showToast("Run an analysis first, then set an alert.");
           return;
         }
 
-        const choice = getSelected();
+        setActiveCard(setActiveWhich);
 
-        // If user wants to BUY used => notify_when_used_available
-        if (choice === 'buy') {
-          currentFormName = "notify_when_used_available";
-          currentIntentType = "buyer_notify_used_available";
-          modalTitle.textContent = "Alert me when one is available used";
-        } else {
-          // If user plans to SELL later => notify_when_buyer_exists
-          currentFormName = "notify_when_buyer_exists";
-          currentIntentType = "seller_notify_buyer_exists";
-          modalTitle.textContent = "Alert me when a buyer wants this";
-        }
+        currentFormName = formName;
+        currentIntentType = intentType;
 
+        modalTitle.textContent = titleText;
         modalEmail.value = "";
         modalNote.value = "";
         modalStatus.textContent = "";
@@ -765,8 +748,6 @@
         currentIntentType = null;
       }
 
-      setAlertBtn.addEventListener('click', openModalForSelectedAction);
-
       modalClose.addEventListener('click', closeModal);
       modalCancel.addEventListener('click', closeModal);
       modalOverlay.addEventListener('click', (e) => {
@@ -776,7 +757,35 @@
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
       });
 
-      // Submit
+      function wireCard(cardEl, onActivate) {
+        cardEl.addEventListener('click', onActivate);
+        cardEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onActivate();
+          }
+        });
+      }
+
+      wireCard(alertCardSell, () => {
+        openModal(
+          "notify_when_used_available",
+          "Notify me if someone wants to sell this used",
+          "buyer_notify_used_available",
+          "sell"
+        );
+      });
+
+      wireCard(alertCardBuy, () => {
+        openModal(
+          "notify_when_buyer_exists",
+          "Notify me if someone wants to buy this used",
+          "seller_notify_buyer_exists",
+          "buy"
+        );
+      });
+
+      // ---------- Submit ----------
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
 
@@ -796,6 +805,7 @@
             session_id: getSessionId(),
             intent_type: currentIntentType,
             prefer_local: getPreferLocal() ? "true" : "false",
+            product_category: getCategoryValue(),
             email,
             note,
             product_text: last.productText,
@@ -824,7 +834,7 @@
       loadRecent();
       getSessionId();
       renderToggle();
-      setSelected(getSelected());
+      // default (no active card until user clicks)
     });
   </script>
 </body>
