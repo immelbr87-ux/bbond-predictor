@@ -251,7 +251,7 @@
       transform: translateX(18px);
     }
 
-    /* Intent selector (fixes the “bold vs gray” confusion) */
+    /* Intent selector */
     .intent-wrap {
       margin-top: 16px;
       border-top: 1px solid #e5e7eb;
@@ -329,7 +329,6 @@
         <option value="other">Other</option>
       </select>
 
-      <!-- Local preference (UX + stored) -->
       <div class="toggle-row">
         <div id="local-toggle" class="toggle" data-on="false" role="switch" aria-checked="false" tabindex="0"></div>
         <div>
@@ -376,7 +375,6 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
-        <!-- NEW: clear single “what next” section (no duplicate confusing buttons) -->
         <div class="intent-wrap">
           <div class="result-label">What do you want to do?</div>
           <div class="muted" style="margin-top:6px;">
@@ -439,8 +437,7 @@
     </div>
   </div>
 
-  <!-- NETLIFY FORMS: MUST exist in built HTML -->
-  <!-- IMPORTANT: honeypot + hidden bot-field + form-name are included -->
+  <!-- NETLIFY FORMS -->
   <form name="notify_when_used_available" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="notify_when_used_available" />
     <input type="hidden" name="bot-field" />
@@ -474,6 +471,20 @@
     <input type="text" name="demand_score" />
     <input type="text" name="confidence_score" />
     <input type="text" name="resale_window" />
+    <input type="text" name="timestamp" />
+  </form>
+
+  <!-- ✅ NEW: EVENT TRACKING FORM (for metrics) -->
+  <form name="bb_event" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="bb_event" />
+    <input type="hidden" name="bot-field" />
+    <input type="text" name="session_id" />
+    <input type="text" name="event_name" />
+    <input type="text" name="intent" />
+    <input type="text" name="prefer_local" />
+    <input type="text" name="product_category" />
+    <input type="text" name="product_text" />
+    <input type="text" name="product_title" />
     <input type="text" name="timestamp" />
   </form>
 
@@ -564,34 +575,76 @@
       function setCategory(val) {
         localStorage.setItem('bb_product_category', val || "");
       }
+      categorySelect.addEventListener('change', () => setCategory(categorySelect.value));
 
-      categorySelect.addEventListener('change', () => {
-        setCategory(categorySelect.value);
-      });
+      // Intent (stored)
+      function getIntent() {
+        return localStorage.getItem('bb_intent') || "sell_later";
+      }
+      function setIntent(intent) {
+        localStorage.setItem('bb_intent', intent);
+      }
+      function renderIntent() {
+        const intent = getIntent();
+        intentSell.setAttribute('data-active', intent === 'sell_later' ? 'true' : 'false');
+        intentBuy.setAttribute('data-active', intent === 'buy_used' ? 'true' : 'false');
+      }
+      function chooseIntent(intent) {
+        setIntent(intent);
+        renderIntent();
+        showToast(intent === 'sell_later' ? "Intent: sell later" : "Intent: buy used");
+      }
+      function wireIntentCard(el, intent) {
+        el.addEventListener('click', () => chooseIntent(intent));
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseIntent(intent);
+          }
+        });
+      }
+      wireIntentCard(intentSell, 'sell_later');
+      wireIntentCard(intentBuy, 'buy_used');
 
-      // Netlify form submit
+      // Netlify form submit (with honeypot in payload)
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
           .join("&");
       }
-
       async function submitNetlifyForm(formName, fields) {
-        // ✅ Honeypot included in payload (must be blank)
         const payload = {
           "form-name": formName,
-          "bot-field": "",
+          "bot-field": "",   // ✅ honeypot must be blank
           ...fields
         };
-
         const res = await fetch("/", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: encode(payload),
         });
-
         if (!res.ok) throw new Error("Netlify form submit failed: " + res.status);
         return true;
+      }
+
+      // ✅ Event helper (never blocks UX)
+      async function trackEvent(eventName, extra = {}) {
+        try {
+          await submitNetlifyForm("bb_event", {
+            session_id: getSessionId(),
+            event_name: eventName,
+            intent: getIntent(),
+            prefer_local: getPreferLocal() ? "true" : "false",
+            product_category: getCategory(),
+            product_text: (productInput.value || "").trim(),
+            product_title: last.productTitle || "",
+            timestamp: new Date().toISOString(),
+            ...extra
+          });
+        } catch (e) {
+          // swallow errors - metrics shouldn't break the app
+          console.warn("Event tracking failed:", e);
+        }
       }
 
       // Store last prediction context
@@ -661,6 +714,8 @@
           return;
         }
 
+        trackEvent("analyze_clicked");
+
         analyzeBtn.disabled = true;
         analyzeBtn.textContent = 'Analyzing...';
 
@@ -693,9 +748,12 @@
           last.confidenceScore = String(prediction.confidenceScore ?? "");
           last.resaleWindow = prediction.resaleWindow || "";
 
+          trackEvent("prediction_success", { product_title: last.productTitle });
+
         } catch (err) {
           console.error(err);
           showToast('Something went wrong. Please try again.');
+          trackEvent("prediction_failed");
         } finally {
           analyzeBtn.disabled = false;
           analyzeBtn.textContent = 'Analyze with AI';
@@ -710,38 +768,7 @@
         }
       });
 
-      // ---------- Intent selection ----------
-      function getIntent() {
-        return localStorage.getItem('bb_intent') || "sell_later";
-      }
-      function setIntent(intent) {
-        localStorage.setItem('bb_intent', intent);
-      }
-      function renderIntent() {
-        const intent = getIntent();
-        intentSell.setAttribute('data-active', intent === 'sell_later' ? 'true' : 'false');
-        intentBuy.setAttribute('data-active', intent === 'buy_used' ? 'true' : 'false');
-      }
-      function chooseIntent(intent) {
-        setIntent(intent);
-        renderIntent();
-        showToast(intent === 'sell_later' ? "Intent: sell later" : "Intent: buy used");
-      }
-
-      function wireIntentCard(el, intent) {
-        el.addEventListener('click', () => chooseIntent(intent));
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            chooseIntent(intent);
-          }
-        });
-      }
-
-      wireIntentCard(intentSell, 'sell_later');
-      wireIntentCard(intentBuy, 'buy_used');
-
-      // ---------- Modal open/close ----------
+      // Modal open/close
       let currentFormName = null;
       let currentIntentType = null;
 
@@ -770,6 +797,8 @@
         modalOverlay.style.display = "flex";
         modalOverlay.setAttribute("aria-hidden", "false");
         setTimeout(() => modalEmail.focus(), 50);
+
+        trackEvent("set_alert_opened", { alert_type: currentIntentType });
       }
 
       function closeModal() {
@@ -789,7 +818,7 @@
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
       });
 
-      // ---------- Submit ----------
+      // Submit
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
 
@@ -822,6 +851,8 @@
           });
 
           modalStatus.textContent = "✅ Saved. We’ll notify you later.";
+          trackEvent("alert_submit_success", { alert_type: currentIntentType });
+
           setTimeout(() => {
             closeModal();
             showToast("Alert saved.");
@@ -831,6 +862,7 @@
           console.error(err);
           modalStatus.textContent = "❌ Submit failed. Try again.";
           modalSubmit.disabled = false;
+          trackEvent("alert_submit_failed", { alert_type: currentIntentType });
         }
       });
 
