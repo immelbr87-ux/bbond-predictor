@@ -415,5 +415,17 @@
       loadRecent();
     });
   </script>
+<body>
+  <!-- your app UI -->
+
+  <!-- Netlify forms must exist in built HTML -->
+  <form name="notify_when_used_available" method="POST" data-netlify="true" hidden>
+    <input type="email" name="email" />
+  </form>
+
+  <form name="notify_when_buyer_exists" method="POST" data-netlify="true" hidden>
+    <input type="email" name="email" />
+  </form>
+</body>
 </body>
 </html>
