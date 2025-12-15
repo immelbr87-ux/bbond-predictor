@@ -474,7 +474,7 @@
     <input type="text" name="timestamp" />
   </form>
 
-  <!-- ✅ NEW: EVENT TRACKING FORM (for metrics) -->
+  <!-- NEW: EVENT TRACKING FORM -->
   <form name="bb_event" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="bb_event" />
     <input type="hidden" name="bot-field" />
@@ -506,15 +506,12 @@
       const recentListEl = document.getElementById('recent-list');
       const toast = document.getElementById('toast');
 
-      // Local toggle
       const localToggle = document.getElementById('local-toggle');
 
-      // Intent UI
       const intentSell = document.getElementById('intent-sell');
       const intentBuy = document.getElementById('intent-buy');
       const setAlertBtn = document.getElementById('set-alert-btn');
 
-      // Modal
       const modalOverlay = document.getElementById('bb-modal-overlay');
       const modalTitle = document.getElementById('bb-modal-title');
       const modalEmail = document.getElementById('bb-email');
@@ -531,7 +528,6 @@
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
-      // Session ID
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -542,7 +538,6 @@
         return id;
       }
 
-      // Prefer local (stored)
       function getPreferLocal() {
         return localStorage.getItem('bb_prefer_local') === 'true';
       }
@@ -559,7 +554,6 @@
         renderToggle();
         showToast(getPreferLocal() ? "Prefer local: ON" : "Prefer local: OFF");
       }
-
       localToggle.addEventListener('click', togglePreferLocal);
       localToggle.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -568,7 +562,6 @@
         }
       });
 
-      // Category (stored)
       function getCategory() {
         return localStorage.getItem('bb_product_category') || "";
       }
@@ -577,7 +570,6 @@
       }
       categorySelect.addEventListener('change', () => setCategory(categorySelect.value));
 
-      // Intent (stored)
       function getIntent() {
         return localStorage.getItem('bb_intent') || "sell_later";
       }
@@ -606,18 +598,16 @@
       wireIntentCard(intentSell, 'sell_later');
       wireIntentCard(intentBuy, 'buy_used');
 
-      // Netlify form submit (with honeypot in payload)
+      // Netlify form submit
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
           .join("&");
       }
+
       async function submitNetlifyForm(formName, fields) {
-        const payload = {
-          "form-name": formName,
-          "bot-field": "",   // ✅ honeypot must be blank
-          ...fields
-        };
+        // ✅ Honeypot field included in payload (must remain blank)
+        const payload = { "form-name": formName, "bot-field": "", ...fields };
         const res = await fetch("/", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -627,7 +617,7 @@
         return true;
       }
 
-      // ✅ Event helper (never blocks UX)
+      // NEW: event tracking helper (logs to bb_event)
       async function trackEvent(eventName, extra = {}) {
         try {
           await submitNetlifyForm("bb_event", {
@@ -642,7 +632,7 @@
             ...extra
           });
         } catch (e) {
-          // swallow errors - metrics shouldn't break the app
+          // Don’t block UX if tracking fails
           console.warn("Event tracking failed:", e);
         }
       }
@@ -714,6 +704,7 @@
           return;
         }
 
+        // event: analyze click
         trackEvent("analyze_clicked");
 
         analyzeBtn.disabled = true;
@@ -740,7 +731,6 @@
           resultsEl.style.display = 'block';
           saveRecent(prediction);
 
-          // Save context for notify submissions
           last.productText = value;
           last.productTitle = prediction.productTitle || "";
           last.valueRange = prediction.valueRange || "";
@@ -748,6 +738,7 @@
           last.confidenceScore = String(prediction.confidenceScore ?? "");
           last.resaleWindow = prediction.resaleWindow || "";
 
+          // event: success
           trackEvent("prediction_success", { product_title: last.productTitle });
 
         } catch (err) {
@@ -768,7 +759,7 @@
         }
       });
 
-      // Modal open/close
+      // ---------- Modal open/close ----------
       let currentFormName = null;
       let currentIntentType = null;
 
@@ -798,7 +789,8 @@
         modalOverlay.setAttribute("aria-hidden", "false");
         setTimeout(() => modalEmail.focus(), 50);
 
-        trackEvent("set_alert_opened", { alert_type: currentIntentType });
+        // event: modal opened
+        trackEvent("set_alert_opened");
       }
 
       function closeModal() {
@@ -818,7 +810,7 @@
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
       });
 
-      // Submit
+      // ---------- Submit ----------
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
 
@@ -851,7 +843,9 @@
           });
 
           modalStatus.textContent = "✅ Saved. We’ll notify you later.";
-          trackEvent("alert_submit_success", { alert_type: currentIntentType });
+
+          // event: alert submitted
+          trackEvent("alert_submitted", { alert_form: currentFormName });
 
           setTimeout(() => {
             closeModal();
@@ -862,7 +856,8 @@
           console.error(err);
           modalStatus.textContent = "❌ Submit failed. Try again.";
           modalSubmit.disabled = false;
-          trackEvent("alert_submit_failed", { alert_type: currentIntentType });
+
+          trackEvent("alert_submit_failed", { alert_form: currentFormName });
         }
       });
 
