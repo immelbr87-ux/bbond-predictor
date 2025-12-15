@@ -5,68 +5,331 @@
   <title>AI Used Value Predictor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; background: #f5f5f7; color: #111827; }
-    header { background: #111827; color: white; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-    header .logo { font-weight: 600; letter-spacing: 0.04em; }
-    header .tagline { font-size: 0.875rem; opacity: 0.8; }
-    main { max-width: 900px; margin: 32px auto; padding: 0 16px 48px; }
-    .card { background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); padding: 24px; margin-bottom: 24px; }
-    h1 { font-size: 1.8rem; margin-bottom: 8px; }
-    .subtitle { font-size: 0.98rem; color: #4b5563; margin-bottom: 18px; }
-    label { font-size: 0.9rem; font-weight: 500; display: block; margin-bottom: 6px; }
-    input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem; margin-bottom: 12px; }
-    input:focus { outline: none; border-color: #111827; box-shadow: 0 0 0 1px #11182722; }
-    button { border: none; border-radius: 999px; padding: 10px 18px; font-size: 0.95rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
-    .btn-primary { background: #111827; color: white; }
-    .btn-primary:disabled { opacity: 0.7; cursor: default; }
-    .btn-secondary { background: #e5e7eb; color: #111827; }
-    .small { font-size: 0.8rem; color: #6b7280; }
-    .results { display: none; margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 16px; }
-    .results h2 { font-size: 1.2rem; margin-bottom: 8px; }
-    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 12px; margin-bottom: 12px; }
-    .result-box { background: #f9fafb; border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
-    .result-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 4px; }
-    .result-value { font-weight: 600; }
-    .pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; background: #e5e7eb; color: #111827; margin-right: 6px; margin-top: 4px; }
-    .muted { color: #6b7280; font-size: 0.9rem; }
-    .recent-list { list-style: none; padding-left: 0; margin: 0; }
-    .recent-list li { font-size: 0.9rem; padding: 4px 0; color: #4b5563; }
-    .toast { position: fixed; bottom: 16px; right: 16px; background: #111827; color: white; padding: 10px 14px; border-radius: 999px; font-size: 0.85rem; display: none; z-index: 60; }
-
-    /* Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
-    .modal { background: white; border-radius: 12px; max-width: 420px; width: 100%; padding: 20px 20px 16px; box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .modal-title { font-size: 1.1rem; font-weight: 600; }
-    .close-btn { border: none; background: transparent; font-size: 1.2rem; cursor: pointer; color: #6b7280; padding: 6px 10px; border-radius: 8px; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
-
-    /* Local preference toggle */
-    .toggle-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
-    .toggle { width: 44px; height: 26px; border-radius: 999px; background: #e5e7eb; position: relative; cursor: pointer; flex: 0 0 auto; }
-    .toggle::after { content: ""; width: 20px; height: 20px; border-radius: 999px; background: white; position: absolute; top: 3px; left: 3px; transition: transform 0.15s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .toggle[data-on="true"] { background: #111827; }
-    .toggle[data-on="true"]::after { transform: translateX(18px); }
-
-    /* Next smartest step */
-    .next-step {
-      margin-top: 14px;
-      padding: 14px;
-      border-radius: 12px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    .next-step-head {
-      display:flex; justify-content: space-between; align-items:center; gap: 10px; flex-wrap: wrap;
+    body {
+      margin: 0;
+      background: #f5f5f7;
+      color: #111827;
+    }
+    header {
+      background: #111827;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header .logo {
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    header .tagline {
+      font-size: 0.875rem;
+      opacity: 0.8;
+    }
+    main {
+      max-width: 900px;
+      margin: 32px auto;
+      padding: 0 16px 48px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 0.98rem;
+      color: #4b5563;
+      margin-bottom: 18px;
+    }
+    label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: block;
       margin-bottom: 6px;
     }
-    .next-step-title { font-weight: 650; }
-    .next-step-actions { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #111827;
+      box-shadow: 0 0 0 1px #11182722;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: #111827;
+      color: white;
+    }
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+      font-weight: 600;
+    }
+    .small {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .results {
+      display: none;
+      margin-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+    }
+    .results h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+    .result-box {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      border: 1px solid #eef2f7;
+    }
+    .result-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .result-value {
+      font-weight: 700;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      background: #e5e7eb;
+      color: #111827;
+      margin-right: 6px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .recent-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .recent-list li {
+      font-size: 0.9rem;
+      padding: 4px 0;
+      color: #4b5563;
+    }
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #111827;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      display: none;
+      z-index: 60;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 100%;
+      padding: 20px 20px 16px;
+      box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .close-btn {
+      border: none;
+      background: transparent;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    /* Local preference toggle */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 6px;
+    }
+    .toggle {
+      width: 44px;
+      height: 26px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      position: relative;
+      cursor: pointer;
+      flex: 0 0 auto;
+      border: 1px solid #d1d5db;
+    }
+    .toggle::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: white;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.15s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .toggle[data-on="true"] {
+      background: #111827;
+      border-color: #111827;
+    }
+    .toggle[data-on="true"]::after {
+      transform: translateX(18px);
+    }
+
+    /* Action chooser (replaces confusing "next smartest step" + extra buttons) */
+    .action-card-wrap {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .action-title {
+      font-size: 1.02rem;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+    }
+    .action-subtitle {
+      margin: 0 0 10px 0;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .action-card {
+      border: 1px solid #d1d5db;
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 12px 12px;
+      cursor: pointer;
+      transition: transform 0.05s ease;
+    }
+    .action-card:active { transform: scale(0.99); }
+    .action-card .headline {
+      font-weight: 800;
+      font-size: 0.98rem;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+    .action-card .desc {
+      font-size: 0.88rem;
+      color: #4b5563;
+      line-height: 1.35;
+    }
+    .action-card[data-selected="true"] {
+      border: 2px solid #111827;
+      background: white;
+    }
+    .action-card[data-selected="true"] .headline {
+      color: #111827;
+    }
+    .action-cta-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      color: #374151;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
 
     @media (max-width: 600px) {
       h1 { font-size: 1.4rem; }
-      header { flex-direction: column; align-items: flex-start; gap: 4px; }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
     }
   </style>
 </head>
@@ -87,18 +350,20 @@
       <label for="product-input">Product link or name</label>
       <input id="product-input" type="text" placeholder="e.g. Ridgid ProPress tool or an Amazon URL" />
 
-      <!-- Local preference (UX + payload for now) -->
+      <!-- Local preference -->
       <div class="toggle-row">
         <div id="local-toggle" class="toggle" data-on="false" role="switch" aria-checked="false" tabindex="0"></div>
         <div>
-          <div style="font-weight:600; font-size:0.92rem;">Prefer local resale if available</div>
-          <div class="small">We’ll prioritize nearby pickup when possible (beta).</div>
+          <div style="font-weight:800; font-size:0.92rem;">Prefer local pickup if possible</div>
+          <div class="small">We’ll prioritize nearby matches for bulky or expensive-to-ship items (beta).</div>
         </div>
       </div>
 
       <button id="analyze-btn" class="btn-primary" type="button">Analyze with AI</button>
 
-      <div class="small">Works well for: tools, baby gear, tech, fitness equipment, gaming, and more.</div>
+      <div class="small" style="margin-top:8px;">
+        Works well for: tools, baby gear, tech, fitness equipment, gaming, and more.
+      </div>
 
       <div id="results" class="results">
         <h2>AI Prediction</h2>
@@ -130,34 +395,31 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
-        <!-- Next smartest step -->
-        <div class="next-step" aria-live="polite">
-          <div class="next-step-head">
-            <div class="next-step-title">Next smartest step</div>
-            <span id="next-step-pill" class="pill">—</span>
-          </div>
-          <div id="next-step-text" class="muted">
-            Run an analysis to get a recommended next action.
+        <!-- Action chooser (replaces duplicate notify buttons) -->
+        <div class="action-card-wrap">
+          <p class="action-title">What do you want to do with this item?</p>
+          <p class="action-subtitle">Pick one, then we’ll save an alert and email you when there’s a match.</p>
+
+          <div class="action-grid">
+            <div id="card-buy" class="action-card" data-selected="true" role="button" tabindex="0" aria-pressed="true">
+              <div class="headline">I want to buy this used</div>
+              <div class="desc">Save my price/timing. If a seller posts this item, notify me.</div>
+            </div>
+
+            <div id="card-sell" class="action-card" data-selected="false" role="button" tabindex="0" aria-pressed="false">
+              <div class="headline">I plan to sell this later</div>
+              <div class="desc">If a buyer is looking for this item, notify me so I can lock in a resale.</div>
+            </div>
           </div>
 
-          <div class="next-step-actions">
-            <button id="next-step-cta-primary" class="btn-primary" type="button">Save my intent</button>
-            <button id="next-step-cta-secondary" class="btn-secondary" type="button">Save the opposite intent</button>
+          <div class="action-cta-row">
+            <button id="set-alert-btn" class="btn-primary" type="button">Set alert</button>
+            <span class="action-pill">Early beta • saves to Netlify Forms</span>
           </div>
 
           <div class="small" style="margin-top:8px;">
-            This creates a “signal” so we can match buyers/sellers later (early beta).
+            Tip: turn on <b>local pickup</b> above if shipping would be expensive.
           </div>
-        </div>
-
-        <!-- Two notify buttons (still visible) -->
-        <div style="margin-top: 14px; display:flex; gap:12px; flex-wrap:wrap;">
-          <button id="notify-sell-used-btn" class="btn-secondary" type="button">
-            Notify me if someone wants to sell this used
-          </button>
-          <button id="notify-buy-used-btn" class="btn-secondary" type="button">
-            Notify me if someone wants to buy this used
-          </button>
         </div>
       </div>
     </section>
@@ -175,7 +437,7 @@
   <div id="bb-modal-overlay" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bb-modal-title">
       <div class="modal-header">
-        <div id="bb-modal-title" class="modal-title">Notify me</div>
+        <div id="bb-modal-title" class="modal-title">Set alert</div>
         <button id="bb-close" class="close-btn" type="button">✕</button>
       </div>
 
@@ -231,7 +493,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // ---------- DOM ----------
+      // DOM
       const analyzeBtn = document.getElementById('analyze-btn');
       const productInput = document.getElementById('product-input');
       const resultsEl = document.getElementById('results');
@@ -245,18 +507,13 @@
       const recentListEl = document.getElementById('recent-list');
       const toast = document.getElementById('toast');
 
-      // Local preference toggle
+      // Local toggle
       const localToggle = document.getElementById('local-toggle');
 
-      // Notify buttons
-      const notifySellBtn = document.getElementById('notify-sell-used-btn');
-      const notifyBuyBtn = document.getElementById('notify-buy-used-btn');
-
-      // Next smartest step
-      const nextStepText = document.getElementById('next-step-text');
-      const nextStepPill = document.getElementById('next-step-pill');
-      const nextStepCtaPrimary = document.getElementById('next-step-cta-primary');
-      const nextStepCtaSecondary = document.getElementById('next-step-cta-secondary');
+      // Action chooser
+      const cardBuy = document.getElementById('card-buy');
+      const cardSell = document.getElementById('card-sell');
+      const setAlertBtn = document.getElementById('set-alert-btn');
 
       // Modal
       const modalOverlay = document.getElementById('bb-modal-overlay');
@@ -268,14 +525,13 @@
       const modalCancel = document.getElementById('bb-cancel');
       const modalSubmit = document.getElementById('bb-submit');
 
-      // ---------- Helpers ----------
       function showToast(message) {
         toast.textContent = message;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
-      // Session ID (group submissions)
+      // Session ID
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -301,21 +557,22 @@
       }
       localToggle.addEventListener('click', togglePreferLocal);
       localToggle.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePreferLocal(); }
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          togglePreferLocal();
+        }
       });
 
-      // Netlify form submit
+      // Netlify submit helpers
       function encode(data) {
-        return Object.keys(data).map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k])).join("&");
+        return Object.keys(data)
+          .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
+          .join("&");
       }
 
-      // ✅ Honeypot is included in the payload here:
       async function submitNetlifyForm(formName, fields) {
-        const payload = {
-          "form-name": formName,
-          "bot-field": "",       // honeypot (must be empty)
-          ...fields
-        };
+        // ✅ honeypot field included in payload:
+        const payload = { "form-name": formName, "bot-field": "", ...fields };
 
         const res = await fetch("/", {
           method: "POST",
@@ -327,7 +584,7 @@
         return true;
       }
 
-      // Last prediction context
+      // Keep last prediction context
       const last = {
         productText: "",
         productTitle: "",
@@ -339,9 +596,15 @@
 
       function loadRecent() {
         const stored = localStorage.getItem('bb_recent_products');
-        if (!stored) { recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>'; return; }
+        if (!stored) {
+          recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+          return;
+        }
         const recent = JSON.parse(stored);
-        if (!recent.length) { recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>'; return; }
+        if (!recent.length) {
+          recentListEl.innerHTML = '<li class="muted">No products analyzed yet.</li>';
+          return;
+        }
         recentListEl.innerHTML = '';
         recent.forEach(item => {
           const li = document.createElement('li');
@@ -380,16 +643,111 @@
         return data.prediction;
       }
 
-      // ---------- Modal open/close ----------
+      async function handleAnalyze() {
+        const value = productInput.value.trim();
+        if (!value) {
+          showToast('Please paste a link or product name first.');
+          return;
+        }
+
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Analyzing...';
+
+        try {
+          const prediction = await callPredict(value);
+
+          productTitleEl.textContent = prediction.productTitle;
+          valueRangeEl.textContent = prediction.valueRange;
+          demandScoreEl.textContent = prediction.demandScore + '/100';
+          confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
+          resaleWindowEl.textContent = prediction.resaleWindow;
+          summaryEl.textContent = prediction.summary;
+
+          conditionPillsEl.innerHTML = '';
+          (prediction.conditionPricing || []).forEach(cond => {
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = cond.tier + ': ' + cond.range;
+            conditionPillsEl.appendChild(pill);
+          });
+
+          resultsEl.style.display = 'block';
+          saveRecent(prediction);
+
+          last.productText = value;
+          last.productTitle = prediction.productTitle || "";
+          last.valueRange = prediction.valueRange || "";
+          last.demandScore = String(prediction.demandScore ?? "");
+          last.confidenceScore = String(prediction.confidenceScore ?? "");
+          last.resaleWindow = prediction.resaleWindow || "";
+
+        } catch (err) {
+          console.error(err);
+          showToast('Something went wrong. Please try again.');
+        } finally {
+          analyzeBtn.disabled = false;
+          analyzeBtn.textContent = 'Analyze with AI';
+        }
+      }
+
+      analyzeBtn.addEventListener('click', handleAnalyze);
+      productInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAnalyze();
+        }
+      });
+
+      // Action chooser selection (clicked one becomes bold/active)
+      function setSelected(which) {
+        const buy = which === 'buy';
+        cardBuy.setAttribute('data-selected', buy ? 'true' : 'false');
+        cardSell.setAttribute('data-selected', buy ? 'false' : 'true');
+        cardBuy.setAttribute('aria-pressed', buy ? 'true' : 'false');
+        cardSell.setAttribute('aria-pressed', buy ? 'false' : 'true');
+        localStorage.setItem('bb_action_choice', buy ? 'buy' : 'sell');
+      }
+      function getSelected() {
+        const stored = localStorage.getItem('bb_action_choice');
+        return (stored === 'sell') ? 'sell' : 'buy';
+      }
+
+      function wireCard(cardEl, which) {
+        cardEl.addEventListener('click', () => setSelected(which));
+        cardEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setSelected(which);
+          }
+        });
+      }
+      wireCard(cardBuy, 'buy');
+      wireCard(cardSell, 'sell');
+
+      // Modal open/close
       let currentFormName = null;
       let currentIntentType = null;
 
-      function openModal(formName, titleText, intentType) {
-        if (!last.productTitle) { showToast("Run an analysis first, then save intent."); return; }
-        currentFormName = formName;
-        currentIntentType = intentType;
+      function openModalForSelectedAction() {
+        if (!last.productTitle) {
+          showToast("Run an analysis first, then set an alert.");
+          return;
+        }
 
-        modalTitle.textContent = titleText;
+        const choice = getSelected();
+
+        // If user wants to BUY used => notify_when_used_available
+        if (choice === 'buy') {
+          currentFormName = "notify_when_used_available";
+          currentIntentType = "buyer_notify_used_available";
+          modalTitle.textContent = "Alert me when one is available used";
+        } else {
+          // If user plans to SELL later => notify_when_buyer_exists
+          currentFormName = "notify_when_buyer_exists";
+          currentIntentType = "seller_notify_buyer_exists";
+          modalTitle.textContent = "Alert me when a buyer wants this";
+        }
+
         modalEmail.value = "";
         modalNote.value = "";
         modalStatus.textContent = "";
@@ -407,70 +765,18 @@
         currentIntentType = null;
       }
 
+      setAlertBtn.addEventListener('click', openModalForSelectedAction);
+
       modalClose.addEventListener('click', closeModal);
       modalCancel.addEventListener('click', closeModal);
-      modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
       document.addEventListener('keydown', (e) => {
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
       });
 
-      // ---------- Next smartest step logic ----------
-      // We pick a recommended “primary” action based on demand/confidence
-      function setNextStep(demand, confidence) {
-        const d = Number(demand || 0);
-        const c = Number(confidence || 0);
-
-        // Defaults
-        let pill = "Recommended";
-        let text = "Save your intent so we can match buyers and sellers later.";
-        let primary = {
-          label: "I want to buy this used",
-          form: "notify_when_used_available",
-          title: "Notify me if someone wants to sell this used",
-          intent: "buyer_notify_used_available"
-        };
-        let secondary = {
-          label: "I will sell this used later",
-          form: "notify_when_buyer_exists",
-          title: "Notify me if someone wants to buy this used",
-          intent: "seller_notify_buyer_exists"
-        };
-
-        if (d >= 75 && c >= 75) {
-          pill = "High liquidity";
-          text = "This looks easy to resell. Smart move: lock in a future buyer signal now (so resale is frictionless later).";
-          primary = secondary;  // recommend “seller” intent as primary
-          secondary = {
-            label: "I want to buy this used",
-            form: "notify_when_used_available",
-            title: "Notify me if someone wants to sell this used",
-            intent: "buyer_notify_used_available"
-          };
-        } else if (d <= 45 || c <= 45) {
-          pill = "Proceed carefully";
-          text = "This may be harder to resell or uncertain. Smart move: set a buy-used alert first so you don’t overpay new.";
-          // keep buy-used as primary
-        }
-
-        nextStepPill.textContent = pill;
-        nextStepText.textContent = text;
-
-        nextStepCtaPrimary.textContent = primary.label;
-        nextStepCtaPrimary.onclick = () => openModal(primary.form, primary.title, primary.intent);
-
-        nextStepCtaSecondary.textContent = secondary.label;
-        nextStepCtaSecondary.onclick = () => openModal(secondary.form, secondary.title, secondary.intent);
-      }
-
-      // ---------- Notify buttons ----------
-      notifySellBtn.addEventListener('click', () => {
-        openModal("notify_when_used_available", "Notify me if someone wants to sell this used", "buyer_notify_used_available");
-      });
-      notifyBuyBtn.addEventListener('click', () => {
-        openModal("notify_when_buyer_exists", "Notify me if someone wants to buy this used", "seller_notify_buyer_exists");
-      });
-
-      // ---------- Submit ----------
+      // Submit
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
 
@@ -502,7 +808,10 @@
           });
 
           modalStatus.textContent = "✅ Saved. We’ll notify you later.";
-          setTimeout(() => { closeModal(); showToast("Alert saved."); }, 800);
+          setTimeout(() => {
+            closeModal();
+            showToast("Alert saved.");
+          }, 800);
 
         } catch (err) {
           console.error(err);
@@ -511,65 +820,11 @@
         }
       });
 
-      // ---------- Analyze ----------
-      async function handleAnalyze() {
-        const value = productInput.value.trim();
-        if (!value) { showToast('Please paste a link or product name first.'); return; }
-
-        analyzeBtn.disabled = true;
-        analyzeBtn.textContent = 'Analyzing...';
-
-        try {
-          const prediction = await callPredict(value);
-
-          productTitleEl.textContent = prediction.productTitle;
-          valueRangeEl.textContent = prediction.valueRange;
-          demandScoreEl.textContent = prediction.demandScore + '/100';
-          confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
-          resaleWindowEl.textContent = prediction.resaleWindow;
-          summaryEl.textContent = prediction.summary;
-
-          conditionPillsEl.innerHTML = '';
-          (prediction.conditionPricing || []).forEach(cond => {
-            const pill = document.createElement('span');
-            pill.className = 'pill';
-            pill.textContent = cond.tier + ': ' + cond.range;
-            conditionPillsEl.appendChild(pill);
-          });
-
-          resultsEl.style.display = 'block';
-          saveRecent(prediction);
-
-          // Save context for notify submissions
-          last.productText = value;
-          last.productTitle = prediction.productTitle || "";
-          last.valueRange = prediction.valueRange || "";
-          last.demandScore = String(prediction.demandScore ?? "");
-          last.confidenceScore = String(prediction.confidenceScore ?? "");
-          last.resaleWindow = prediction.resaleWindow || "";
-
-          // ✅ Update the “Next smartest step”
-          setNextStep(prediction.demandScore, prediction.confidenceScore);
-
-        } catch (err) {
-          console.error(err);
-          showToast('Something went wrong. Please try again.');
-        } finally {
-          analyzeBtn.disabled = false;
-          analyzeBtn.textContent = 'Analyze with AI';
-        }
-      }
-
-      analyzeBtn.addEventListener('click', handleAnalyze);
-      productInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); handleAnalyze(); }
-      });
-
       // Init
       loadRecent();
       getSessionId();
       renderToggle();
-      setNextStep(0,0);
+      setSelected(getSelected());
     });
   </script>
 </body>
