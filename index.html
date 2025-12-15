@@ -93,6 +93,7 @@
     .btn-secondary {
       background: #e5e7eb;
       color: #111827;
+      font-weight: 600;
     }
     .small {
       font-size: 0.8rem;
@@ -183,7 +184,7 @@
     .modal {
       background: white;
       border-radius: 12px;
-      max-width: 460px;
+      max-width: 420px;
       width: 100%;
       padding: 20px 20px 16px;
       box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
@@ -196,7 +197,7 @@
     }
     .modal-title {
       font-size: 1.1rem;
-      font-weight: 700;
+      font-weight: 800;
     }
     .close-btn {
       border: none;
@@ -206,6 +207,7 @@
       color: #6b7280;
       padding: 6px 10px;
       border-radius: 8px;
+      font-weight: 700;
     }
     .modal-actions {
       display: flex;
@@ -249,56 +251,42 @@
       transform: translateX(18px);
     }
 
-    /* Alert cards (replaces confusing section + buttons) */
-    .alert-section {
-      margin-top: 18px;
+    /* Intent selector (fixes the “bold vs gray” confusion) */
+    .intent-wrap {
+      margin-top: 16px;
       border-top: 1px solid #e5e7eb;
-      padding-top: 14px;
+      padding-top: 16px;
     }
-    .alert-title {
-      font-weight: 800;
-      font-size: 0.95rem;
-      margin-bottom: 6px;
-    }
-    .alert-sub {
-      color: #6b7280;
-      font-size: 0.88rem;
-      margin-bottom: 10px;
-    }
-    .alert-grid {
+    .intent-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 12px;
     }
-    .alert-card {
+    .intent-card {
       border: 1px solid #d1d5db;
+      background: #f9fafb;
       border-radius: 12px;
       padding: 12px 12px;
-      background: #f9fafb;
       cursor: pointer;
-      transition: transform 0.05s ease, border-color 0.12s ease, background 0.12s ease;
-      user-select: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
     }
-    .alert-card:hover {
-      border-color: #111827;
-    }
-    .alert-card.active {
-      background: #ffffff;
-      border-color: #111827;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
-    }
-    .alert-card .t {
+    .intent-card .intent-title {
       font-weight: 800;
+      margin-bottom: 4px;
       font-size: 0.95rem;
       color: #111827;
     }
-    .alert-card .d {
-      font-size: 0.86rem;
-      color: #4b5563;
-      line-height: 1.25rem;
+    .intent-card .intent-desc {
+      font-size: 0.85rem;
+      color: #6b7280;
+      line-height: 1.35;
+    }
+    .intent-card[data-active="true"] {
+      background: #ffffff;
+      border-color: #111827;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
 
     @media (max-width: 600px) {
@@ -328,28 +316,25 @@
       <label for="product-input">Product link or name</label>
       <input id="product-input" type="text" placeholder="e.g. Ridgid ProPress tool or an Amazon URL" />
 
-      <label for="product-category">Category</label>
+      <label for="product-category">Product category</label>
       <select id="product-category">
         <option value="">Select a category (optional)</option>
         <option value="tools">Tools</option>
         <option value="baby_gear">Baby gear</option>
-        <option value="electronics">Electronics</option>
+        <option value="tech">Tech</option>
         <option value="sporting_goods">Sporting goods</option>
-        <option value="fitness">Fitness</option>
-        <option value="gaming">Gaming</option>
         <option value="furniture">Furniture</option>
+        <option value="fitness">Fitness equipment</option>
+        <option value="gaming">Gaming</option>
         <option value="other">Other</option>
       </select>
-      <div class="small" style="margin-top:-6px; margin-bottom:10px;">
-        Helps us match future buyers/sellers and local pickup rules by category.
-      </div>
 
-      <!-- Local preference -->
+      <!-- Local preference (UX + stored) -->
       <div class="toggle-row">
         <div id="local-toggle" class="toggle" data-on="false" role="switch" aria-checked="false" tabindex="0"></div>
         <div>
-          <div style="font-weight:800; font-size:0.92rem;">Prefer local resale if available</div>
-          <div class="small">We’ll prioritize nearby buyers/pickup when possible (beta).</div>
+          <div style="font-weight:800; font-size:0.92rem;">Prefer local pickup if available</div>
+          <div class="small">We’ll prioritize nearby matches when possible (beta).</div>
         </div>
       </div>
 
@@ -391,24 +376,32 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
-        <!-- One clear alert section (no duplicate "next step" + no confusing bottom buttons) -->
-        <div class="alert-section">
-          <div class="alert-title">Set an alert</div>
-          <div class="alert-sub">Save your request and we’ll notify you when a match exists (early beta).</div>
+        <!-- NEW: clear single “what next” section (no duplicate confusing buttons) -->
+        <div class="intent-wrap">
+          <div class="result-label">What do you want to do?</div>
+          <div class="muted" style="margin-top:6px;">
+            Choose one, then click <b>Set alert</b>. (This saves your request so we can notify you later.)
+          </div>
 
-          <div class="alert-grid">
-            <div id="alert-card-sell" class="alert-card" role="button" tabindex="0" aria-label="Notify me if someone wants to sell this used">
-              <div class="t">Notify me if someone wants to sell this used</div>
-              <div class="d">Best when you want to buy used later and don’t want to hunt.</div>
+          <div class="intent-grid">
+            <div id="intent-sell" class="intent-card" data-active="true" role="button" tabindex="0">
+              <div class="intent-title">I plan to sell this later</div>
+              <div class="intent-desc">Save an alert so you can find a buyer when you’re done with it.</div>
             </div>
-
-            <div id="alert-card-buy" class="alert-card" role="button" tabindex="0" aria-label="Notify me if someone wants to buy this used">
-              <div class="t">Notify me if someone wants to buy this used</div>
-              <div class="d">Best when you may sell later and want proof of demand.</div>
+            <div id="intent-buy" class="intent-card" data-active="false" role="button" tabindex="0">
+              <div class="intent-title">I want to buy this used</div>
+              <div class="intent-desc">Save an alert so we can notify you if someone posts or matches this item.</div>
             </div>
           </div>
-        </div>
 
+          <button id="set-alert-btn" class="btn-secondary" type="button">
+            Set alert
+          </button>
+
+          <div class="small" style="margin-top:8px;">
+            Early beta: alerts are stored now; notifications are coming soon.
+          </div>
+        </div>
       </div>
     </section>
 
@@ -427,7 +420,7 @@
   <div id="bb-modal-overlay" class="modal-overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bb-modal-title">
       <div class="modal-header">
-        <div id="bb-modal-title" class="modal-title">Notify me</div>
+        <div id="bb-modal-title" class="modal-title">Set alert</div>
         <button id="bb-close" class="close-btn" type="button">✕</button>
       </div>
 
@@ -446,8 +439,8 @@
     </div>
   </div>
 
-  <!-- NETLIFY FORMS MUST EXIST IN BUILT HTML -->
-  <!-- IMPORTANT: add honeypot & matching names -->
+  <!-- NETLIFY FORMS: MUST exist in built HTML -->
+  <!-- IMPORTANT: honeypot + hidden bot-field + form-name are included -->
   <form name="notify_when_used_available" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="notify_when_used_available" />
     <input type="hidden" name="bot-field" />
@@ -489,7 +482,8 @@
       // ---------- DOM ----------
       const analyzeBtn = document.getElementById('analyze-btn');
       const productInput = document.getElementById('product-input');
-      const productCategory = document.getElementById('product-category');
+      const categorySelect = document.getElementById('product-category');
+
       const resultsEl = document.getElementById('results');
       const productTitleEl = document.getElementById('product-title');
       const valueRangeEl = document.getElementById('value-range');
@@ -501,12 +495,13 @@
       const recentListEl = document.getElementById('recent-list');
       const toast = document.getElementById('toast');
 
-      // Local preference toggle
+      // Local toggle
       const localToggle = document.getElementById('local-toggle');
 
-      // Alert cards
-      const alertCardSell = document.getElementById('alert-card-sell');
-      const alertCardBuy = document.getElementById('alert-card-buy');
+      // Intent UI
+      const intentSell = document.getElementById('intent-sell');
+      const intentBuy = document.getElementById('intent-buy');
+      const setAlertBtn = document.getElementById('set-alert-btn');
 
       // Modal
       const modalOverlay = document.getElementById('bb-modal-overlay');
@@ -525,7 +520,7 @@
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
-      // Session ID (group submissions)
+      // Session ID
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -536,7 +531,7 @@
         return id;
       }
 
-      // Local preference in browser
+      // Prefer local (stored)
       function getPreferLocal() {
         return localStorage.getItem('bb_prefer_local') === 'true';
       }
@@ -553,6 +548,7 @@
         renderToggle();
         showToast(getPreferLocal() ? "Prefer local: ON" : "Prefer local: OFF");
       }
+
       localToggle.addEventListener('click', togglePreferLocal);
       localToggle.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -561,7 +557,19 @@
         }
       });
 
-      // Netlify form submit (with honeypot payload)
+      // Category (stored)
+      function getCategory() {
+        return localStorage.getItem('bb_product_category') || "";
+      }
+      function setCategory(val) {
+        localStorage.setItem('bb_product_category', val || "");
+      }
+
+      categorySelect.addEventListener('change', () => {
+        setCategory(categorySelect.value);
+      });
+
+      // Netlify form submit
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
@@ -569,9 +577,10 @@
       }
 
       async function submitNetlifyForm(formName, fields) {
+        // ✅ Honeypot included in payload (must be blank)
         const payload = {
           "form-name": formName,
-          "bot-field": "", // honeypot value must exist in payload
+          "bot-field": "",
           ...fields
         };
 
@@ -585,7 +594,7 @@
         return true;
       }
 
-      // Store last prediction context so alerts can attach it
+      // Store last prediction context
       const last = {
         productText: "",
         productTitle: "",
@@ -594,10 +603,6 @@
         confidenceScore: "",
         resaleWindow: ""
       };
-
-      function getCategoryValue() {
-        return (productCategory && productCategory.value) ? productCategory.value : "";
-      }
 
       function loadRecent() {
         const stored = localStorage.getItem('bb_recent_products');
@@ -635,7 +640,7 @@
             productText,
             session_id: getSessionId(),
             prefer_local: getPreferLocal(),
-            product_category: getCategoryValue()
+            product_category: getCategory()
           })
         });
 
@@ -662,12 +667,12 @@
         try {
           const prediction = await callPredict(value);
 
-          productTitleEl.textContent = prediction.productTitle || "";
-          valueRangeEl.textContent = prediction.valueRange || "";
-          demandScoreEl.textContent = (prediction.demandScore ?? "—") + '/100';
-          confidenceScoreEl.textContent = (prediction.confidenceScore ?? "—") + '/100';
-          resaleWindowEl.textContent = prediction.resaleWindow || "";
-          summaryEl.textContent = prediction.summary || "";
+          productTitleEl.textContent = prediction.productTitle;
+          valueRangeEl.textContent = prediction.valueRange;
+          demandScoreEl.textContent = prediction.demandScore + '/100';
+          confidenceScoreEl.textContent = prediction.confidenceScore + '/100';
+          resaleWindowEl.textContent = prediction.resaleWindow;
+          summaryEl.textContent = prediction.summary;
 
           conditionPillsEl.innerHTML = '';
           (prediction.conditionPricing || []).forEach(cond => {
@@ -680,6 +685,7 @@
           resultsEl.style.display = 'block';
           saveRecent(prediction);
 
+          // Save context for notify submissions
           last.productText = value;
           last.productTitle = prediction.productTitle || "";
           last.valueRange = prediction.valueRange || "";
@@ -704,33 +710,58 @@
         }
       });
 
+      // ---------- Intent selection ----------
+      function getIntent() {
+        return localStorage.getItem('bb_intent') || "sell_later";
+      }
+      function setIntent(intent) {
+        localStorage.setItem('bb_intent', intent);
+      }
+      function renderIntent() {
+        const intent = getIntent();
+        intentSell.setAttribute('data-active', intent === 'sell_later' ? 'true' : 'false');
+        intentBuy.setAttribute('data-active', intent === 'buy_used' ? 'true' : 'false');
+      }
+      function chooseIntent(intent) {
+        setIntent(intent);
+        renderIntent();
+        showToast(intent === 'sell_later' ? "Intent: sell later" : "Intent: buy used");
+      }
+
+      function wireIntentCard(el, intent) {
+        el.addEventListener('click', () => chooseIntent(intent));
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseIntent(intent);
+          }
+        });
+      }
+
+      wireIntentCard(intentSell, 'sell_later');
+      wireIntentCard(intentBuy, 'buy_used');
+
       // ---------- Modal open/close ----------
       let currentFormName = null;
       let currentIntentType = null;
 
-      function setActiveCard(which) {
-        // "which" = "sell" or "buy"
-        if (which === "sell") {
-          alertCardSell.classList.add('active');
-          alertCardBuy.classList.remove('active');
-        } else {
-          alertCardBuy.classList.add('active');
-          alertCardSell.classList.remove('active');
-        }
-      }
-
-      function openModal(formName, titleText, intentType, setActiveWhich) {
+      function openModal() {
         if (!last.productTitle) {
           showToast("Run an analysis first, then set an alert.");
           return;
         }
 
-        setActiveCard(setActiveWhich);
+        const intent = getIntent();
+        if (intent === 'sell_later') {
+          currentFormName = "notify_when_buyer_exists";
+          currentIntentType = "seller_notify_buyer_exists";
+          modalTitle.textContent = "Set alert: sell later";
+        } else {
+          currentFormName = "notify_when_used_available";
+          currentIntentType = "buyer_notify_used_available";
+          modalTitle.textContent = "Set alert: buy used";
+        }
 
-        currentFormName = formName;
-        currentIntentType = intentType;
-
-        modalTitle.textContent = titleText;
         modalEmail.value = "";
         modalNote.value = "";
         modalStatus.textContent = "";
@@ -748,6 +779,7 @@
         currentIntentType = null;
       }
 
+      setAlertBtn.addEventListener('click', openModal);
       modalClose.addEventListener('click', closeModal);
       modalCancel.addEventListener('click', closeModal);
       modalOverlay.addEventListener('click', (e) => {
@@ -755,34 +787,6 @@
       });
       document.addEventListener('keydown', (e) => {
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
-      });
-
-      function wireCard(cardEl, onActivate) {
-        cardEl.addEventListener('click', onActivate);
-        cardEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onActivate();
-          }
-        });
-      }
-
-      wireCard(alertCardSell, () => {
-        openModal(
-          "notify_when_used_available",
-          "Notify me if someone wants to sell this used",
-          "buyer_notify_used_available",
-          "sell"
-        );
-      });
-
-      wireCard(alertCardBuy, () => {
-        openModal(
-          "notify_when_buyer_exists",
-          "Notify me if someone wants to buy this used",
-          "seller_notify_buyer_exists",
-          "buy"
-        );
       });
 
       // ---------- Submit ----------
@@ -805,7 +809,7 @@
             session_id: getSessionId(),
             intent_type: currentIntentType,
             prefer_local: getPreferLocal() ? "true" : "false",
-            product_category: getCategoryValue(),
+            product_category: getCategory(),
             email,
             note,
             product_text: last.productText,
@@ -834,7 +838,8 @@
       loadRecent();
       getSessionId();
       renderToggle();
-      // default (no active card until user clicks)
+      categorySelect.value = getCategory();
+      renderIntent();
     });
   </script>
 </body>
