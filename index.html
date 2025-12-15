@@ -248,6 +248,26 @@
       transform: translateX(18px);
     }
 
+    /* Smart next step */
+    .next-step {
+      margin-top: 16px;
+      padding: 14px 14px 12px;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+    .next-step .title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .next-step .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
       h1 { font-size: 1.4rem; }
       header {
@@ -322,8 +342,22 @@
 
         <p id="summary" class="muted" style="margin-top: 12px;"></p>
 
+        <!-- ✅ NEW: Smartest next step -->
+        <div class="next-step" id="next-step">
+          <div class="title">Smartest next step</div>
+          <div class="muted" id="next-step-copy">
+            Run an alert so you’re not guessing later — we’ll ping you if a match appears.
+          </div>
+          <div class="row">
+            <button id="smart-next-step-btn" class="btn-primary" type="button">
+              Set the best alert
+            </button>
+            <span class="small" id="smart-next-step-hint">We’ll choose the best option based on your intent.</span>
+          </div>
+        </div>
+
         <!-- ✅ TWO NOTIFY BUTTONS -->
-        <div style="margin-top: 18px; display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="margin-top: 14px; display:flex; gap:12px; flex-wrap:wrap;">
           <button id="notify-sell-used-btn" class="btn-secondary" type="button">
             Notify me if someone wants to sell this used
           </button>
@@ -430,6 +464,10 @@
       const notifySellBtn = document.getElementById('notify-sell-used-btn');
       const notifyBuyBtn = document.getElementById('notify-buy-used-btn');
 
+      // Smart next step
+      const smartNextBtn = document.getElementById('smart-next-step-btn');
+      const nextStepCopy = document.getElementById('next-step-copy');
+
       // Modal
       const modalOverlay = document.getElementById('bb-modal-overlay');
       const modalTitle = document.getElementById('bb-modal-title');
@@ -447,7 +485,7 @@
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
-      // Session ID (so you can group submissions)
+      // Session ID
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -458,7 +496,7 @@
         return id;
       }
 
-      // Store local preference in browser
+      // Prefer local stored
       function getPreferLocal() {
         return localStorage.getItem('bb_prefer_local') === 'true';
       }
@@ -484,15 +522,20 @@
         }
       });
 
-      // Netlify form submit (works without visible form)
+      // Netlify form submit
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
           .join("&");
       }
 
+      // ✅ honeypot field added to payload: "bot-field": ""
       async function submitNetlifyForm(formName, fields) {
-        const payload = { "form-name": formName, ...fields };
+        const payload = {
+          "form-name": formName,
+          "bot-field": "",   // honeypot
+          ...fields
+        };
         const res = await fetch("/", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -502,7 +545,7 @@
         return true;
       }
 
-      // Store last prediction context so notify can attach it
+      // Store last prediction context
       const last = {
         productText: "",
         productTitle: "",
@@ -601,6 +644,11 @@
           last.confidenceScore = String(prediction.confidenceScore ?? "");
           last.resaleWindow = prediction.resaleWindow || "";
 
+          // Smart next step copy can adapt to local preference
+          nextStepCopy.textContent = getPreferLocal()
+            ? "Set an alert — we’ll prioritize nearby pickup matches when possible."
+            : "Set an alert — we’ll notify you when a match appears so you can act fast.";
+
         } catch (err) {
           console.error(err);
           showToast('Something went wrong. Please try again.');
@@ -674,6 +722,16 @@
         );
       });
 
+      // ---------- Smart next step button ----------
+      // Defaults to "sell-used" alert (most generally useful for shoppers)
+      smartNextBtn.addEventListener('click', () => {
+        openModal(
+          "notify_when_used_available",
+          "Set the best alert (sell-side match)",
+          "buyer_notify_used_available"
+        );
+      });
+
       // ---------- Submit ----------
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
@@ -726,4 +784,3 @@
   </script>
 </body>
 </html>
-
