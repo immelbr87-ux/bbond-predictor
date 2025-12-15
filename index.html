@@ -57,7 +57,7 @@
       display: block;
       margin-bottom: 6px;
     }
-    input, select {
+    input, select, textarea {
       width: 100%;
       padding: 10px 12px;
       border-radius: 8px;
@@ -66,7 +66,7 @@
       margin-bottom: 12px;
       background: white;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: #111827;
       box-shadow: 0 0 0 1px #11182722;
@@ -94,6 +94,11 @@
       background: #e5e7eb;
       color: #111827;
       font-weight: 600;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: #111827;
+      border: 1px solid #d1d5db;
     }
     .small {
       font-size: 0.8rem;
@@ -184,7 +189,7 @@
     .modal {
       background: white;
       border-radius: 12px;
-      max-width: 420px;
+      max-width: 460px;
       width: 100%;
       padding: 20px 20px 16px;
       box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
@@ -289,6 +294,32 @@
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
 
+    /* Share loop */
+    .share-box {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+    .share-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .share-input {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .share-input input {
+      margin: 0;
+      flex: 1;
+      min-width: 220px;
+    }
+
     @media (max-width: 600px) {
       h1 { font-size: 1.4rem; }
       header {
@@ -378,7 +409,7 @@
         <div class="intent-wrap">
           <div class="result-label">What do you want to do?</div>
           <div class="muted" style="margin-top:6px;">
-            Choose one, then click <b>Set alert</b>.
+            Choose one, then click <b>Set alert</b>. (This saves your request so we can notify you later.)
           </div>
 
           <div class="intent-grid">
@@ -434,24 +465,31 @@
       </div>
 
       <p id="bb-status" class="muted" style="margin:10px 0 0 0;"></p>
+
+      <!-- Share loop (shown after success) -->
+      <div id="bb-share-box" class="share-box" aria-hidden="true">
+        <div style="font-weight:800;">Help us find early users</div>
+        <div class="small" style="margin-top:4px;">
+          If this is useful, share it with one friend who buys/sells gear.
+        </div>
+
+        <div class="share-input" style="margin-top:10px;">
+          <input id="bb-share-link" type="text" readonly />
+          <button id="bb-copy-link" class="btn-secondary" type="button">Copy</button>
+        </div>
+
+        <div class="share-row">
+          <button id="bb-native-share" class="btn-ghost" type="button">Share…</button>
+          <button id="bb-email-share" class="btn-ghost" type="button">Email</button>
+        </div>
+
+        <p id="bb-share-status" class="small" style="margin:10px 0 0 0;"></p>
+      </div>
     </div>
   </div>
 
-  <!-- NETLIFY FORMS (must exist in built HTML) -->
-  <form name="bb_event" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
-    <input type="hidden" name="form-name" value="bb_event" />
-    <input type="hidden" name="bot-field" />
-    <input type="text" name="session_id" />
-    <input type="text" name="event_name" />
-    <input type="text" name="intent" />
-    <input type="text" name="prefer_local" />
-    <input type="text" name="product_category" />
-    <input type="text" name="product_text" />
-    <input type="text" name="product_title" />
-    <input type="text" name="page_url" />
-    <input type="text" name="timestamp" />
-  </form>
-
+  <!-- NETLIFY FORMS -->
+  <!-- Alerts -->
   <form name="notify_when_used_available" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
     <input type="hidden" name="form-name" value="notify_when_used_available" />
     <input type="hidden" name="bot-field" />
@@ -488,9 +526,23 @@
     <input type="text" name="timestamp" />
   </form>
 
+  <!-- Event tracking -->
+  <form name="bb_event" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="bb_event" />
+    <input type="hidden" name="bot-field" />
+    <input type="text" name="session_id" />
+    <input type="text" name="event_name" />
+    <input type="text" name="intent" />
+    <input type="text" name="prefer_local" />
+    <input type="text" name="product_category" />
+    <input type="text" name="product_text" />
+    <input type="text" name="product_title" />
+    <input type="text" name="timestamp" />
+  </form>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // DOM
+      // ---------- DOM ----------
       const analyzeBtn = document.getElementById('analyze-btn');
       const productInput = document.getElementById('product-input');
       const categorySelect = document.getElementById('product-category');
@@ -521,12 +573,26 @@
       const modalCancel = document.getElementById('bb-cancel');
       const modalSubmit = document.getElementById('bb-submit');
 
+      // Share loop DOM
+      const shareBox = document.getElementById('bb-share-box');
+      const shareLink = document.getElementById('bb-share-link');
+      const copyLinkBtn = document.getElementById('bb-copy-link');
+      const nativeShareBtn = document.getElementById('bb-native-share');
+      const emailShareBtn = document.getElementById('bb-email-share');
+      const shareStatus = document.getElementById('bb-share-status');
+
+      // ---------- Helpers ----------
       function showToast(message) {
         toast.textContent = message;
         toast.style.display = 'block';
         setTimeout(() => { toast.style.display = 'none'; }, 2500);
       }
 
+      function nowISO() {
+        return new Date().toISOString();
+      }
+
+      // Session ID
       function getSessionId() {
         const key = 'bb_session_id';
         let id = localStorage.getItem(key);
@@ -537,6 +603,78 @@
         return id;
       }
 
+      // Prefer local (stored)
+      function getPreferLocal() {
+        return localStorage.getItem('bb_prefer_local') === 'true';
+      }
+      function setPreferLocal(val) {
+        localStorage.setItem('bb_prefer_local', val ? 'true' : 'false');
+      }
+      function renderToggle() {
+        const on = getPreferLocal();
+        localToggle.setAttribute('data-on', on ? 'true' : 'false');
+        localToggle.setAttribute('aria-checked', on ? 'true' : 'false');
+      }
+      function togglePreferLocal() {
+        setPreferLocal(!getPreferLocal());
+        renderToggle();
+        showToast(getPreferLocal() ? "Prefer local: ON" : "Prefer local: OFF");
+        trackEvent("prefer_local_toggled");
+      }
+
+      localToggle.addEventListener('click', togglePreferLocal);
+      localToggle.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          togglePreferLocal();
+        }
+      });
+
+      // Category (stored)
+      function getCategory() {
+        return localStorage.getItem('bb_product_category') || "";
+      }
+      function setCategory(val) {
+        localStorage.setItem('bb_product_category', val || "");
+      }
+
+      categorySelect.addEventListener('change', () => {
+        setCategory(categorySelect.value);
+        trackEvent("product_category_changed");
+      });
+
+      // Intent (stored)
+      function getIntent() {
+        return localStorage.getItem('bb_intent') || "sell_later";
+      }
+      function setIntent(intent) {
+        localStorage.setItem('bb_intent', intent);
+      }
+      function renderIntent() {
+        const intent = getIntent();
+        intentSell.setAttribute('data-active', intent === 'sell_later' ? 'true' : 'false');
+        intentBuy.setAttribute('data-active', intent === 'buy_used' ? 'true' : 'false');
+      }
+      function chooseIntent(intent) {
+        setIntent(intent);
+        renderIntent();
+        showToast(intent === 'sell_later' ? "Intent: sell later" : "Intent: buy used");
+        trackEvent("intent_changed");
+      }
+
+      function wireIntentCard(el, intent) {
+        el.addEventListener('click', () => chooseIntent(intent));
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseIntent(intent);
+          }
+        });
+      }
+      wireIntentCard(intentSell, 'sell_later');
+      wireIntentCard(intentBuy, 'buy_used');
+
+      // Netlify form submit
       function encode(data) {
         return Object.keys(data)
           .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
@@ -544,41 +682,24 @@
       }
 
       async function submitNetlifyForm(formName, fields) {
+        // ✅ Honeypot included in payload (must be blank)
         const payload = {
           "form-name": formName,
-          "bot-field": "",         // honeypot must exist + be blank
+          "bot-field": "",
           ...fields
         };
+
         const res = await fetch("/", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: encode(payload),
         });
+
         if (!res.ok) throw new Error("Netlify form submit failed: " + res.status);
         return true;
       }
 
-      // Stored preferences
-      function getPreferLocal() { return localStorage.getItem('bb_prefer_local') === 'true'; }
-      function setPreferLocal(val) { localStorage.setItem('bb_prefer_local', val ? 'true' : 'false'); }
-      function renderToggle() {
-        const on = getPreferLocal();
-        localToggle.setAttribute('data-on', on ? 'true' : 'false');
-        localToggle.setAttribute('aria-checked', on ? 'true' : 'false');
-      }
-
-      function getCategory() { return localStorage.getItem('bb_product_category') || ""; }
-      function setCategory(val) { localStorage.setItem('bb_product_category', val || ""); }
-
-      function getIntent() { return localStorage.getItem('bb_intent') || "sell_later"; }
-      function setIntent(intent) { localStorage.setItem('bb_intent', intent); }
-      function renderIntent() {
-        const intent = getIntent();
-        intentSell.setAttribute('data-active', intent === 'sell_later' ? 'true' : 'false');
-        intentBuy.setAttribute('data-active', intent === 'buy_used' ? 'true' : 'false');
-      }
-
-      // Last prediction context
+      // Prediction context
       const last = {
         productText: "",
         productTitle: "",
@@ -588,8 +709,9 @@
         resaleWindow: ""
       };
 
-      // Event tracking (bb_event)
-      async function trackEvent(eventName, extra = {}) {
+      // Event tracking helper
+      async function trackEvent(eventName) {
+        // keep tracking "best effort" (never block UX)
         try {
           await submitNetlifyForm("bb_event", {
             session_id: getSessionId(),
@@ -597,19 +719,15 @@
             intent: getIntent(),
             prefer_local: getPreferLocal() ? "true" : "false",
             product_category: getCategory(),
-            product_text: last.productText || productInput.value.trim() || "",
+            product_text: last.productText || (productInput.value || "").trim(),
             product_title: last.productTitle || "",
-            page_url: window.location.href,
-            timestamp: new Date().toISOString(),
-            ...extra
+            timestamp: nowISO()
           });
         } catch (e) {
-          // silently ignore tracking failures
-          console.warn("bb_event tracking failed:", e);
+          // swallow
         }
       }
 
-      // Recent list
       function loadRecent() {
         const stored = localStorage.getItem('bb_recent_products');
         if (!stored) {
@@ -661,11 +779,14 @@
       }
 
       async function handleAnalyze() {
-        const value = productInput.value.trim();
+        const value = (productInput.value || "").trim();
         if (!value) {
           showToast('Please paste a link or product name first.');
           return;
         }
+
+        // update context early so events capture product_text
+        last.productText = value;
 
         analyzeBtn.disabled = true;
         analyzeBtn.textContent = 'Analyzing...';
@@ -693,7 +814,7 @@
           resultsEl.style.display = 'block';
           saveRecent(prediction);
 
-          last.productText = value;
+          // Save context for alert submissions
           last.productTitle = prediction.productTitle || "";
           last.valueRange = prediction.valueRange || "";
           last.demandScore = String(prediction.demandScore ?? "");
@@ -720,54 +841,24 @@
         }
       });
 
-      // Toggle handlers
-      function togglePreferLocal() {
-        setPreferLocal(!getPreferLocal());
-        renderToggle();
-        showToast(getPreferLocal() ? "Prefer local: ON" : "Prefer local: OFF");
-        trackEvent("local_toggle_changed");
-      }
-      localToggle.addEventListener('click', togglePreferLocal);
-      localToggle.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          togglePreferLocal();
-        }
-      });
-
-      categorySelect.addEventListener('change', () => {
-        setCategory(categorySelect.value);
-        trackEvent("category_changed", { product_category: getCategory() });
-      });
-
-      // Intent selection
-      function chooseIntent(intent) {
-        setIntent(intent);
-        renderIntent();
-        showToast(intent === 'sell_later' ? "Intent: sell later" : "Intent: buy used");
-        trackEvent("intent_changed", { intent });
-      }
-      function wireIntentCard(el, intent) {
-        el.addEventListener('click', () => chooseIntent(intent));
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            chooseIntent(intent);
-          }
-        });
-      }
-      wireIntentCard(intentSell, 'sell_later');
-      wireIntentCard(intentBuy, 'buy_used');
-
-      // Modal open/close
+      // ---------- Modal open/close ----------
       let currentFormName = null;
       let currentIntentType = null;
+
+      function resetShareBox() {
+        shareBox.style.display = "none";
+        shareBox.setAttribute("aria-hidden", "true");
+        shareStatus.textContent = "";
+        shareLink.value = "";
+      }
 
       function openModal() {
         if (!last.productTitle) {
           showToast("Run an analysis first, then set an alert.");
           return;
         }
+
+        resetShareBox();
 
         const intent = getIntent();
         if (intent === 'sell_later') {
@@ -797,6 +888,7 @@
         modalOverlay.setAttribute("aria-hidden", "true");
         currentFormName = null;
         currentIntentType = null;
+        resetShareBox();
       }
 
       setAlertBtn.addEventListener('click', openModal);
@@ -809,7 +901,79 @@
         if (e.key === "Escape" && modalOverlay.style.display === "flex") closeModal();
       });
 
-      // Submit alert
+      // ---------- Share loop ----------
+      function getShareUrl() {
+        // Use canonical URL if provided, else current URL
+        const canonical = document.querySelector('link[rel="canonical"]');
+        return (canonical && canonical.href) ? canonical.href : window.location.href;
+      }
+
+      async function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+        // fallback
+        const t = document.createElement('textarea');
+        t.value = text;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        return true;
+      }
+
+      function showShareBox() {
+        const url = getShareUrl();
+        shareLink.value = url;
+        shareBox.style.display = "block";
+        shareBox.setAttribute("aria-hidden", "false");
+        trackEvent("share_box_shown");
+      }
+
+      copyLinkBtn.addEventListener('click', async () => {
+        try {
+          await copyToClipboard(shareLink.value || getShareUrl());
+          shareStatus.textContent = "Copied. Thank you 🙌";
+          showToast("Link copied.");
+          trackEvent("share_copied");
+        } catch (e) {
+          shareStatus.textContent = "Couldn’t copy. You can manually select the link.";
+        }
+      });
+
+      nativeShareBtn.addEventListener('click', async () => {
+        const url = getShareUrl();
+        const text = "Check this used value + resale alert tool:";
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: "AI Used Value Predictor", text, url });
+            shareStatus.textContent = "Shared. Thank you 🙌";
+            trackEvent("share_native_used");
+          } else {
+            // if not supported, just copy
+            await copyToClipboard(url);
+            shareStatus.textContent = "Sharing not supported here—link copied instead.";
+            trackEvent("share_native_unavailable");
+          }
+        } catch (e) {
+          // user cancelled share is fine
+          trackEvent("share_native_cancelled");
+        }
+      });
+
+      emailShareBtn.addEventListener('click', () => {
+        const url = encodeURIComponent(getShareUrl());
+        const subject = encodeURIComponent("Quick tool for resale value + used alerts");
+        const body = encodeURIComponent(
+          "Thought you’d like this: " + getShareUrl() + "\n\n" +
+          "It estimates future used value + lets you set alerts for buying/selling used."
+        );
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        trackEvent("share_email_clicked");
+      });
+
+      // ---------- Submit alert ----------
       modalSubmit.addEventListener('click', async () => {
         if (!currentFormName) return;
 
@@ -838,16 +1002,20 @@
             demand_score: last.demandScore,
             confidence_score: last.confidenceScore,
             resale_window: last.resaleWindow,
-            timestamp: new Date().toISOString()
+            timestamp: nowISO()
           });
 
           modalStatus.textContent = "✅ Saved. We’ll notify you later.";
           trackEvent("alert_submit_success");
 
+          // show share loop after success
+          showShareBox();
+
           setTimeout(() => {
-            closeModal();
             showToast("Alert saved.");
-          }, 800);
+            // leave modal open so they can share; they can close when done
+            modalSubmit.disabled = false;
+          }, 400);
 
         } catch (err) {
           console.error(err);
@@ -863,6 +1031,7 @@
       renderToggle();
       categorySelect.value = getCategory();
       renderIntent();
+      resetShareBox();
     });
   </script>
 </body>
