@@ -18,6 +18,24 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || '{}');
+    function encode(data) {
+  return Object.keys(data)
+    .map((k) => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
+    .join("&");
+}
+
+async function submitNetlifyForm(formName, fields) {
+  const payload = { "form-name": formName, ...fields };
+
+  const res = await fetch("/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: encode(payload),
+  });
+
+  if (!res.ok) throw new Error(`Netlify form submit failed: ${res.status}`);
+  return true;
+}
     const productText = body.productText && body.productText.trim();
 
     if (!productText) {
